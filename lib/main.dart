@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lead_flow/app/theme/app_theme.dart';
-import 'package:lead_flow/app/router/app_router.dart';
+import 'package:leads_studio/app/theme/app_theme.dart';
+import 'package:leads_studio/app/router/app_router.dart';
 
 void main() {
   runApp(
@@ -20,7 +20,7 @@ class LeadsStudioApp extends ConsumerWidget {
     final goRouter = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
-      title: 'LeadsStudio',
+      title: 'Leads Studio',
       theme: AppTheme.lightTheme,
       routerConfig: goRouter,
     );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lead_flow/core/widgets/app_page_header.dart';
-import 'package:lead_flow/core/widgets/app_card.dart';
+import 'package:leads_studio/core/widgets/app_page_header.dart';
+import 'package:leads_studio/core/widgets/app_card.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -53,7 +53,7 @@ class SettingsScreen extends StatelessWidget {
                           const Divider(height: 1),
                           ListTile(
                             leading: const Icon(Icons.info_outline),
-                            title: const Text('About LeadsStudio'),
+                            title: const Text('About Leads Studio'),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () {},
                           ),

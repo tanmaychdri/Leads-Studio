@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.leadflow" "\0"
-            VALUE "FileDescription", "lead_flow" "\0"
+            VALUE "CompanyName", "com.leadsstudio" "\0"
+            VALUE "FileDescription", "leads_studio" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "lead_flow" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.leadflow. All rights reserved." "\0"
-            VALUE "OriginalFilename", "lead_flow.exe" "\0"
-            VALUE "ProductName", "lead_flow" "\0"
+            VALUE "InternalName", "leads_studio" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.leadsstudio. All rights reserved." "\0"
+            VALUE "OriginalFilename", "leads_studio.exe" "\0"
+            VALUE "ProductName", "leads_studio" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

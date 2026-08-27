@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:lead_flow/core/widgets/app_page_header.dart';
-import 'package:lead_flow/core/widgets/app_empty_state.dart';
+import 'package:leads_studio/core/widgets/app_page_header.dart';
+import 'package:leads_studio/core/widgets/app_empty_state.dart';
 
 class FollowUpsScreen extends StatelessWidget {
   const FollowUpsScreen({super.key});

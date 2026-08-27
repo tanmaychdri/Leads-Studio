@@ -1,4 +1,4 @@
-package com.leadflow.lead_flow
+package com.leadsstudio.leads_studio
 
 import io.flutter.embedding.android.FlutterActivity
 

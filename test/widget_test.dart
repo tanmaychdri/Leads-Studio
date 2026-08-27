@@ -20,7 +20,10 @@ void main() {
       ),
     );
 
-    // Verify that our placeholder text is present.
-    expect(find.text('LeadFlow Foundation Started'), findsOneWidget);
+    // Give the router time to push the initial location
+    await tester.pumpAndSettle();
+
+    // Verify that our dashboard placeholder text is present.
+    expect(find.text('Dashboard Route'), findsOneWidget);
   });
 }

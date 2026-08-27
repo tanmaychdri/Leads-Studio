@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lead_flow/app/theme/app_theme.dart';
+import 'package:lead_flow/app/router/app_router.dart';
 
 void main() {
   runApp(
-    // ProviderScope is required for Riverpod to work
     const ProviderScope(
       child: LeadFlowApp(),
     ),
@@ -15,20 +16,13 @@ class LeadFlowApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // This is a temporary MaterialApp.
-    // In upcoming steps, we will replace this with MaterialApp.router 
-    // to use GoRouter, and apply our custom theme system.
-    return MaterialApp(
+    // Watch the GoRouter provider to get the router configuration
+    final goRouter = ref.watch(goRouterProvider);
+
+    return MaterialApp.router(
       title: 'LeadFlow',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
-      home: const Scaffold(
-        body: Center(
-          child: Text('LeadFlow Foundation Started'),
-        ),
-      ),
+      theme: AppTheme.lightTheme,
+      routerConfig: goRouter,
     );
   }
 }

@@ -4,7 +4,7 @@ class AppColors {
   // Primary & Secondary
   static const Color primary = Color(0xFF2563EB); // Modern Blue
   static const Color primaryDark = Color(0xFF1D4ED8);
-  static const Color secondary = Color(0xFF10B981); // Emerald Green
+  static const Color secondary = Color(0xFF107C41); // Microsoft Excel Green
 
   // Backgrounds & Surfaces
   static const Color background = Color(0xFFF8FAFC); // Slate 50

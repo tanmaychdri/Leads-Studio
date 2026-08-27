@@ -23,7 +23,7 @@ void main() {
     // Give the router time to push the initial location
     await tester.pumpAndSettle();
 
-    // Verify that our dashboard placeholder text is present.
-    expect(find.text('Dashboard Route'), findsOneWidget);
+    // Verify that our dashboard screen is present by looking for its welcome message.
+    expect(find.text('Good Morning 👋'), findsOneWidget);
   });
 }

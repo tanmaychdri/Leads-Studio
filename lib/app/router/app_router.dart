@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lead_flow/core/widgets/app_scaffold.dart';
+import 'package:lead_flow/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:lead_flow/features/leads/presentation/leads_screen.dart';
+import 'package:lead_flow/features/follow_ups/presentation/follow_ups_screen.dart';
+import 'package:lead_flow/features/settings/presentation/settings_screen.dart';
 
 // We use a Provider to expose the router, which allows us to handle
 // authentication redirects or state-based routing easily in the future.
@@ -19,9 +23,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/dashboard',
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Dashboard Route')),
-                ),
+                builder: (context, state) => const DashboardScreen(),
               ),
             ],
           ),
@@ -30,9 +32,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/leads',
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Leads Route')),
-                ),
+                builder: (context, state) => const LeadsScreen(),
               ),
             ],
           ),
@@ -41,9 +41,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/follow-ups',
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Follow-ups Route')),
-                ),
+                builder: (context, state) => const FollowUpsScreen(),
               ),
             ],
           ),
@@ -52,9 +50,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/settings',
-                builder: (context, state) => const Scaffold(
-                  body: Center(child: Text('Settings Route')),
-                ),
+                builder: (context, state) => const SettingsScreen(),
               ),
             ],
           ),

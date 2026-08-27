@@ -6,13 +6,13 @@ import 'package:lead_flow/app/router/app_router.dart';
 void main() {
   runApp(
     const ProviderScope(
-      child: LeadFlowApp(),
+      child: LeadsStudioApp(),
     ),
   );
 }
 
-class LeadFlowApp extends ConsumerWidget {
-  const LeadFlowApp({super.key});
+class LeadsStudioApp extends ConsumerWidget {
+  const LeadsStudioApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,7 +20,7 @@ class LeadFlowApp extends ConsumerWidget {
     final goRouter = ref.watch(goRouterProvider);
 
     return MaterialApp.router(
-      title: 'LeadFlow',
+      title: 'LeadsStudio',
       theme: AppTheme.lightTheme,
       routerConfig: goRouter,
     );

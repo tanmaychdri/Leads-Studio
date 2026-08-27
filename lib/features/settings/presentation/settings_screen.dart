@@ -53,7 +53,7 @@ class SettingsScreen extends StatelessWidget {
                           const Divider(height: 1),
                           ListTile(
                             leading: const Icon(Icons.info_outline),
-                            title: const Text('About LeadFlow'),
+                            title: const Text('About LeadsStudio'),
                             trailing: const Icon(Icons.chevron_right),
                             onTap: () {},
                           ),

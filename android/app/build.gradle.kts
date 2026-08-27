@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.leadsstudio.leads_studio"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

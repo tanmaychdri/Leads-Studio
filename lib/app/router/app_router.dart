@@ -6,19 +6,42 @@ import 'package:leads_studio/features/dashboard/presentation/dashboard_screen.da
 import 'package:leads_studio/features/leads/presentation/leads_screen.dart';
 import 'package:leads_studio/features/follow_ups/presentation/follow_ups_screen.dart';
 import 'package:leads_studio/features/settings/presentation/settings_screen.dart';
+import 'package:leads_studio/features/auth/presentation/screens/login_screen.dart';
+import 'package:leads_studio/features/auth/presentation/providers/auth_provider.dart';
 
-// We use a Provider to expose the router, which allows us to handle
-// authentication redirects or state-based routing easily in the future.
 final goRouterProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
+
   return GoRouter(
     initialLocation: '/dashboard',
+    redirect: (context, state) {
+      final isAuth = authState.user != null;
+      final isLoggingIn = state.matchedLocation == '/login';
+
+      if (authState.isLoading) {
+        return null; // Wait for initialization
+      }
+
+      if (!isAuth && !isLoggingIn) {
+        return '/login';
+      }
+
+      if (isAuth && isLoggingIn) {
+        return '/dashboard';
+      }
+
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: '/login',
+        builder: (context, state) => const LoginScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppScaffold(navigationShell: navigationShell);
         },
         branches: [
-          // Dashboard Branch
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -27,7 +50,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Leads Branch
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -36,7 +58,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Follow-ups Branch
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -45,7 +66,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Settings Branch
           StatefulShellBranch(
             routes: [
               GoRoute(

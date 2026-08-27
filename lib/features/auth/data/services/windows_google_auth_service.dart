@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -7,8 +8,8 @@ import 'package:leads_studio/features/auth/data/models/app_user.dart';
 import 'package:leads_studio/features/auth/data/services/auth_service.dart';
 
 class WindowsGoogleAuthService implements AuthService {
-  static const String _clientId = '76263927650-usgn9ino83fmj3g286po5mdaa3qm7an2.apps.googleusercontent.com';
-  static const String _clientSecret = 'YOUR_WINDOWS_CLIENT_SECRET';
+  String get _clientId => dotenv.env['WINDOWS_CLIENT_ID'] ?? '';
+  String get _clientSecret => dotenv.env['WINDOWS_CLIENT_SECRET'] ?? '';
   
   static const String _authUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
   static const String _tokenUrl = 'https://oauth2.googleapis.com/token';
@@ -132,3 +133,4 @@ class WindowsGoogleAuthService implements AuthService {
     );
   }
 }
+

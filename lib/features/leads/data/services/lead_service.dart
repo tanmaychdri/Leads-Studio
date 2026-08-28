@@ -2,10 +2,24 @@ import 'package:drift/drift.dart';
 import 'package:leads_studio/features/database/data/app_database.dart';
 import 'package:leads_studio/features/database/data/daos/leads_dao.dart';
 import 'package:uuid/uuid.dart';
+import 'package:leads_studio/features/notifications/domain/notification_scheduler.dart';
 
 class LeadService {
+  Future<void> reconcileAllNotifications() async {
+    final allLeads = await _leadsDao.select(_leadsDao.leads).get();
+    for (final lead in allLeads) {
+      await _scheduler.rescheduleLeadNotifications(lead);
+    }
+    await _scheduler.reconcileDailySummaries(allLeads);
+  }
+
+  Future<void> _reconcileSummaries() async {
+    final allLeads = await _leadsDao.select(_leadsDao.leads).get();
+    await _scheduler.reconcileDailySummaries(allLeads);
+  }
   final LeadsDao _leadsDao;
   final _uuid = const Uuid();
+  final ReminderScheduler _scheduler = ReminderScheduler();
 
   LeadService(this._leadsDao);
 
@@ -53,12 +67,14 @@ class LeadService {
     DateTime? eventDate,
     String? status,
     DateTime? nextFollowUpDate,
+    DateTime? reminderDate,
     String? notes,
     Map<String, dynamic> customFields = const {},
   }) async {
     final now = DateTime.now();
+    final newId = _uuid.v4();
     final companion = LeadsCompanion.insert(
-      id: _uuid.v4(),
+      id: newId,
       userId: userId,
       clientName: Value(clientName),
       phoneNumber: Value(phoneNumber),
@@ -67,6 +83,7 @@ class LeadService {
       eventDate: Value(eventDate),
       status: Value(status ?? 'New'),
       nextFollowUpDate: Value(nextFollowUpDate),
+      reminderDate: Value(reminderDate),
       notes: Value(notes),
       customFields: customFields,
       syncStatus: const Value('created'),
@@ -76,6 +93,11 @@ class LeadService {
     );
 
     await _leadsDao.upsertLead(companion);
+    
+    // Schedule notifications
+    final newLead = await getLeadById(newId);
+    await _scheduler.rescheduleLeadNotifications(newLead);
+    await _reconcileSummaries();
   }
 
   Future<void> updateLead(
@@ -87,11 +109,14 @@ class LeadService {
     DateTime? eventDate,
     String? status,
     DateTime? nextFollowUpDate,
+    DateTime? reminderDate,
     String? notes,
     Map<String, dynamic>? customFields,
   }) async {
     final companion = LeadsCompanion(
       id: Value(existingLead.id),
+      userId: Value(existingLead.userId),
+      createdAt: Value(existingLead.createdAt),
       clientName: Value(clientName ?? existingLead.clientName),
       phoneNumber: Value(phoneNumber ?? existingLead.phoneNumber),
       email: Value(email ?? existingLead.email),
@@ -99,6 +124,7 @@ class LeadService {
       eventDate: Value(eventDate ?? existingLead.eventDate),
       status: Value(status ?? existingLead.status),
       nextFollowUpDate: Value(nextFollowUpDate ?? existingLead.nextFollowUpDate),
+      reminderDate: Value(reminderDate ?? existingLead.reminderDate),
       notes: Value(notes ?? existingLead.notes),
       customFields: Value(customFields ?? existingLead.customFields),
       syncStatus: const Value('updated'),
@@ -106,6 +132,11 @@ class LeadService {
     );
 
     await _leadsDao.upsertLead(companion);
+    
+    // Reschedule notifications
+    final updatedLead = await getLeadById(existingLead.id);
+    await _scheduler.rescheduleLeadNotifications(updatedLead);
+    await _reconcileSummaries();
   }
   
   Future<void> updateLeadStatus(String leadId, String newStatus) async {
@@ -116,9 +147,15 @@ class LeadService {
         updatedAt: Value(DateTime.now()),
       ),
     );
+    
+    final updatedLead = await getLeadById(leadId);
+    await _scheduler.rescheduleLeadNotifications(updatedLead);
+    await _reconcileSummaries();
   }
 
   Future<void> deleteLead(String id) async {
     await _leadsDao.softDeleteLead(id);
+    await _scheduler.cancelLeadNotifications(id);
+    await _reconcileSummaries();
   }
 }

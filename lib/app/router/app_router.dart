@@ -8,6 +8,7 @@ import 'package:leads_studio/features/leads/presentation/screens/leads_screen.da
 import 'package:leads_studio/features/leads/presentation/screens/lead_form_screen.dart';
 import 'package:leads_studio/features/leads/presentation/screens/lead_details_screen.dart';
 
+import 'package:leads_studio/features/notifications/presentation/screens/notification_settings_screen.dart';
 import 'package:leads_studio/features/settings/presentation/settings_screen.dart';
 import 'package:leads_studio/features/auth/presentation/screens/login_screen.dart';
 import 'package:leads_studio/features/auth/presentation/providers/auth_provider.dart';
@@ -61,6 +62,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+        routes: [
+          GoRoute(
+            path: 'notifications',
+            builder: (context, state) => const NotificationSettingsScreen(),
+          ),
+        ],
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:leads_studio/features/drive/presentation/providers/drive_provider.dart';
 import 'package:leads_studio/features/drive/presentation/providers/drive_state.dart';
 import 'package:leads_studio/features/excel/data/models/parse_result.dart';
+import 'package:leads_studio/features/database/data/services/excel_import_service.dart';
 import 'package:leads_studio/features/excel/data/services/excel_service.dart';
 
 final excelServiceProvider = Provider((ref) => ExcelService());
@@ -10,6 +11,7 @@ final excelProvider = StateNotifierProvider<ExcelNotifier, ExcelState>((ref) {
   return ExcelNotifier(
     ref.watch(excelServiceProvider),
     ref.watch(driveProvider),
+    ref.watch(excelImportServiceProvider),
   );
 });
 
@@ -19,6 +21,7 @@ class ExcelState {
   final List<String> availableWorksheets;
   final String? selectedWorksheet;
   final ParseResult? parseResult;
+  final ImportSummary? importSummary;
 
   const ExcelState({
     this.isLoading = false,
@@ -26,6 +29,7 @@ class ExcelState {
     this.availableWorksheets = const [],
     this.selectedWorksheet,
     this.parseResult,
+    this.importSummary,
   });
 
   ExcelState copyWith({
@@ -35,6 +39,7 @@ class ExcelState {
     List<String>? availableWorksheets,
     String? selectedWorksheet,
     ParseResult? parseResult,
+    ImportSummary? importSummary,
   }) {
     return ExcelState(
       isLoading: isLoading ?? this.isLoading,
@@ -42,6 +47,7 @@ class ExcelState {
       availableWorksheets: availableWorksheets ?? this.availableWorksheets,
       selectedWorksheet: selectedWorksheet ?? this.selectedWorksheet,
       parseResult: parseResult ?? this.parseResult,
+      importSummary: importSummary ?? this.importSummary,
     );
   }
 }
@@ -49,8 +55,9 @@ class ExcelState {
 class ExcelNotifier extends StateNotifier<ExcelState> {
   final ExcelService _excelService;
   final DriveState driveState;
+  final ExcelImportService _importService;
 
-  ExcelNotifier(this._excelService, this.driveState) : super(const ExcelState()) {
+  ExcelNotifier(this._excelService, this.driveState, this._importService) : super(const ExcelState()) {
     _initialize();
   }
 
@@ -92,7 +99,8 @@ class ExcelNotifier extends StateNotifier<ExcelState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final result = await _excelService.parseWorksheet(sheetName);
-      state = state.copyWith(isLoading: false, parseResult: result);
+      final summary = await _importService.importParseResult(result, sheetName);
+      state = state.copyWith(isLoading: false, parseResult: result, importSummary: summary);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }

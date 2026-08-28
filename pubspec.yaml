@@ -48,6 +48,10 @@ dependencies:
   path_provider: ^2.1.6
   excel: ^4.0.6
   uuid: ^4.6.0
+  drift: ^2.34.3
+  sqlite3_flutter_libs: ^0.6.0+eol
+  path: ^1.9.1
+  sqlite3: ^3.5.2
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +64,8 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  drift_dev: ^2.34.5
+  build_runner: ^2.16.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

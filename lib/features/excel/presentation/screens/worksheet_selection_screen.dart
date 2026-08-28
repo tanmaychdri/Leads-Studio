@@ -60,6 +60,7 @@ class WorksheetSelectionScreen extends ConsumerWidget {
 
   Widget _buildResultView(ExcelState state) {
     final result = state.parseResult!;
+    final importSummary = state.importSummary;
     
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -79,6 +80,14 @@ class WorksheetSelectionScreen extends ConsumerWidget {
         if (result.leads.isNotEmpty)
           _buildStatCard('Custom Fields Found', result.leads.first.customFields.keys.length.toString(), Colors.orange),
         
+        if (importSummary != null) ...[
+          const SizedBox(height: 24),
+          const Text('Database Import Summary', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.purple)),
+          const SizedBox(height: 12),
+          _buildStatCard('Successfully Imported', importSummary.successfullyImported.toString(), Colors.purple),
+          const SizedBox(height: 12),
+          _buildStatCard('Skipped (Local Changes Protected)', importSummary.skippedDueToLocalChanges.toString(), Colors.orange),
+        ],
         const SizedBox(height: 32),
         if (result.warnings.isNotEmpty) ...[
           const Text('Warnings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange)),

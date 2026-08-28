@@ -49,7 +49,22 @@ class AndroidGoogleAuthService implements AuthService {
   }
 
   @override
+  Future<String?> getAccessToken() async {
+    final account = _googleSignIn.currentUser ?? await _googleSignIn.signInSilently();
+    if (account != null) {
+      final auth = await account.authentication;
+      return auth.accessToken;
+    }
+    return null;
+  }
+
+  @override
+  Future<bool> requestScopes(List<String> scopes) async {
+    return await _googleSignIn.requestScopes(scopes);
+  }
+  @override
   Future<void> signOut() async {
     await _googleSignIn.signOut();
   }
 }
+

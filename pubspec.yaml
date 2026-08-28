@@ -42,6 +42,9 @@ dependencies:
   http: ^1.6.0
   flutter_secure_storage: ^11.0.0
   flutter_dotenv: ^6.0.1
+  google_fonts: ^8.2.1
+  flutter_animate: ^4.5.2
+  googleapis: ^17.0.0
 
 dev_dependencies:
   flutter_test:

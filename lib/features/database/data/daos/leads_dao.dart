@@ -40,7 +40,7 @@ class LeadsDao extends DatabaseAccessor<AppDatabase> with _$LeadsDaoMixin {
   }
 
   /// Insert or update a lead
-  Future<void> upsertLead(Lead lead) {
+  Future<void> upsertLead(Insertable<Lead> lead) {
     return into(leads).insertOnConflictUpdate(lead);
   }
 

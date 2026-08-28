@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:leads_studio/core/widgets/app_scaffold.dart';
 import 'package:leads_studio/features/dashboard/presentation/dashboard_screen.dart';
-import 'package:leads_studio/features/leads/presentation/leads_screen.dart';
+import 'package:leads_studio/features/leads/presentation/screens/leads_screen.dart';
+import 'package:leads_studio/features/leads/presentation/screens/lead_form_screen.dart';
+import 'package:leads_studio/features/leads/presentation/screens/lead_details_screen.dart';
 import 'package:leads_studio/features/follow_ups/presentation/follow_ups_screen.dart';
 import 'package:leads_studio/features/settings/presentation/settings_screen.dart';
 import 'package:leads_studio/features/auth/presentation/screens/login_screen.dart';
@@ -77,6 +79,20 @@ final goRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/leads',
                 builder: (context, state) => const LeadsScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add',
+                    builder: (context, state) => const LeadFormScreen(),
+                  ),
+                  GoRoute(
+                    path: 'edit/:id',
+                    builder: (context, state) => LeadFormScreen(existingLeadId: state.pathParameters['id']),
+                  ),
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) => LeadDetailsScreen(id: state.pathParameters['id']!),
+                  ),
+                ],
               ),
             ],
           ),

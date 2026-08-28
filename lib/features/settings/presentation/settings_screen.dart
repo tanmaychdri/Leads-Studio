@@ -67,8 +67,10 @@ class SettingsScreen extends ConsumerWidget {
                           ],
                         ),
                         const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        Wrap(
+                          alignment: WrapAlignment.spaceEvenly,
+                          spacing: 8.0,
+                          runSpacing: 8.0,
                           children: [
                             TextButton.icon(
                               onPressed: driveState.isLoading ? null : () => ref.read(driveProvider.notifier).refreshConnectedFile(),

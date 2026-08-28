@@ -17,6 +17,28 @@ class LeadService {
     return _leadsDao.watchFollowUps(userId);
   }
   
+    // --- Phase 7 Follow-up Queries ---
+  
+  Stream<List<Lead>> watchOverdueFollowUps(String userId) {
+    return _leadsDao.watchOverdueFollowUps(userId);
+  }
+
+  Stream<List<Lead>> watchTodayFollowUps(String userId) {
+    return _leadsDao.watchTodayFollowUps(userId);
+  }
+
+  Stream<List<Lead>> watchUpcomingFollowUps(String userId) {
+    return _leadsDao.watchUpcomingFollowUps(userId);
+  }
+
+  Stream<List<Lead>> watchNeedsScheduling(String userId) {
+    return _leadsDao.watchNeedsScheduling(userId);
+  }
+
+  Stream<List<Lead>> watchAllActiveLeads(String userId) {
+    return _leadsDao.watchAllActiveLeads(userId);
+  }
+
   Future<Lead> getLeadById(String id) async {
     final query = _leadsDao.select(_leadsDao.leads)..where((tbl) => tbl.id.equals(id));
     return await query.getSingle();

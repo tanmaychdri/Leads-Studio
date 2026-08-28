@@ -8,17 +8,23 @@ import 'package:leads_studio/features/follow_ups/presentation/follow_ups_screen.
 import 'package:leads_studio/features/settings/presentation/settings_screen.dart';
 import 'package:leads_studio/features/auth/presentation/screens/login_screen.dart';
 import 'package:leads_studio/features/auth/presentation/providers/auth_provider.dart';
+import 'package:leads_studio/features/drive/presentation/screens/connect_drive_screen.dart';
+import 'package:leads_studio/features/drive/presentation/screens/select_file_screen.dart';
+import 'package:leads_studio/features/excel/presentation/screens/worksheet_selection_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  // Only rebuild GoRouter if authentication status changes (login/logout)
+  final isAuth = ref.watch(authProvider.select((state) => state.user != null));
 
   return GoRouter(
     initialLocation: '/dashboard',
     redirect: (context, state) {
-      final isAuth = authState.user != null;
       final isLoggingIn = state.matchedLocation == '/login';
 
-      if (authState.isLoading) {
+      // Read current state directly to avoid rebuilding Router
+      final authState = ref.read(authProvider);
+
+      if (authState.isLoading && !isAuth) {
         return null; // Wait for initialization
       }
 
@@ -36,6 +42,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/drive/connect',
+        builder: (context, state) => const ConnectDriveScreen(),
+      ),
+      GoRoute(
+        path: '/excel/preview',
+        builder: (context, state) => const WorksheetSelectionScreen(),
+      ),
+      GoRoute(
+        path: '/drive/select',
+        builder: (context, state) => const SelectFileScreen(),
       ),
       GoRoute(
         path: '/settings',
@@ -75,3 +93,4 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+

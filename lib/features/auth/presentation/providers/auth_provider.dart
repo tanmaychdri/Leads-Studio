@@ -55,6 +55,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<bool> requestScopes(List<String> scopes) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final success = await _authService.requestScopes(scopes);
+      state = state.copyWith(isLoading: false);
+      return success;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
@@ -70,3 +81,4 @@ final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final authService = ref.watch(authServiceProvider);
   return AuthNotifier(authService);
 });
+

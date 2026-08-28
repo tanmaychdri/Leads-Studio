@@ -19,16 +19,17 @@ class GoogleDriveService {
     return drive.DriveApi(client);
   }
 
-  /// Lists all Excel files in the user's Google Drive.
+  /// Lists Excel files and Google Sheets in the user's Google Drive.
   Future<List<ConnectedDriveFile>> listExcelFiles() async {
     final api = await _getDriveApi();
     if (api == null) throw Exception('Not authenticated with Google');
 
     try {
-      // Query for .xlsx files
+      // Query for .xlsx files OR native Google Sheets
       final fileList = await api.files.list(
-        q: "mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' and trashed=false",
+        q: "(mimeType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' or name contains '.xlsx' or mimeType='application/vnd.google-apps.spreadsheet') and trashed=false",
         spaces: 'drive',
+        orderBy: 'modifiedTime desc',
         $fields: 'files(id, name, mimeType, modifiedTime, size)',
       );
 
@@ -53,17 +54,34 @@ class GoogleDriveService {
     if (api == null) throw Exception('Not authenticated with Google');
 
     try {
-      final drive.Media media = await api.files.get(
-        fileId,
-        downloadOptions: drive.DownloadOptions.fullMedia,
-      ) as drive.Media;
-
+      // Check the mimeType of the file to see if it's a native Google Sheet
+      final fileMeta = await api.files.get(fileId, $fields: 'mimeType') as drive.File;
+      
       final saveFile = File(localSavePath);
       final sink = saveFile.openWrite();
       
-      await media.stream.forEach((chunk) {
-        sink.add(chunk);
-      });
+      if (fileMeta.mimeType == 'application/vnd.google-apps.spreadsheet') {
+        // Native Google Sheets MUST be exported to Excel format
+        final drive.Media media = await api.files.export(
+          fileId,
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          downloadOptions: drive.DownloadOptions.fullMedia,
+        ) as drive.Media;
+        
+        await media.stream.forEach((chunk) {
+          sink.add(chunk);
+        });
+      } else {
+        // Raw .xlsx files can be downloaded directly
+        final drive.Media media = await api.files.get(
+          fileId,
+          downloadOptions: drive.DownloadOptions.fullMedia,
+        ) as drive.Media;
+        
+        await media.stream.forEach((chunk) {
+          sink.add(chunk);
+        });
+      }
       
       await sink.flush();
       await sink.close();

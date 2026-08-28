@@ -45,6 +45,9 @@ dependencies:
   google_fonts: ^8.2.1
   flutter_animate: ^4.5.2
   googleapis: ^17.0.0
+  path_provider: ^2.1.6
+  excel: ^4.0.6
+  uuid: ^4.6.0
 
 dev_dependencies:
   flutter_test:

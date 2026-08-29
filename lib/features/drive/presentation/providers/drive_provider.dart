@@ -62,7 +62,7 @@ class DriveNotifier extends StateNotifier<DriveState> {
   }
 
   Future<void> selectAndDownloadFile(ConnectedDriveFile file) async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    state = state.copyWith(isLoading: true, downloadingFileId: file.fileId, clearError: true);
     try {
       // Get the local app documents directory
       final directory = await getApplicationDocumentsDirectory();
@@ -89,9 +89,10 @@ class DriveNotifier extends StateNotifier<DriveState> {
         isLoading: false,
         connectedFile: connectedFile,
         availableFiles: [], // clear list
+        clearDownloadingFileId: true,
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(isLoading: false, error: e.toString(), clearDownloadingFileId: true);
     }
   }
 

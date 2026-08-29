@@ -1196,6 +1196,17 @@ class $SpreadsheetMetadataTable extends SpreadsheetMetadata
         type: DriftSqlType.dateTime,
         requiredDuringInsert: false,
       );
+  static const VerificationMeta _lastSuccessfulSyncAtMeta =
+      const VerificationMeta('lastSuccessfulSyncAt');
+  @override
+  late final GeneratedColumn<DateTime> lastSuccessfulSyncAt =
+      GeneratedColumn<DateTime>(
+        'last_successful_sync_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   @override
   List<GeneratedColumn> get $columns => [
     userId,
@@ -1203,6 +1214,7 @@ class $SpreadsheetMetadataTable extends SpreadsheetMetadata
     worksheetName,
     lastImportedAt,
     lastKnownRemoteModifiedTime,
+    lastSuccessfulSyncAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1263,6 +1275,15 @@ class $SpreadsheetMetadataTable extends SpreadsheetMetadata
         ),
       );
     }
+    if (data.containsKey('last_successful_sync_at')) {
+      context.handle(
+        _lastSuccessfulSyncAtMeta,
+        lastSuccessfulSyncAt.isAcceptableOrUnknown(
+          data['last_successful_sync_at']!,
+          _lastSuccessfulSyncAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1295,6 +1316,10 @@ class $SpreadsheetMetadataTable extends SpreadsheetMetadata
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_known_remote_modified_time'],
       ),
+      lastSuccessfulSyncAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_successful_sync_at'],
+      ),
     );
   }
 
@@ -1311,12 +1336,14 @@ class SpreadsheetMetadataData extends DataClass
   final String worksheetName;
   final DateTime lastImportedAt;
   final DateTime? lastKnownRemoteModifiedTime;
+  final DateTime? lastSuccessfulSyncAt;
   const SpreadsheetMetadataData({
     required this.userId,
     required this.fileId,
     required this.worksheetName,
     required this.lastImportedAt,
     this.lastKnownRemoteModifiedTime,
+    this.lastSuccessfulSyncAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1329,6 +1356,9 @@ class SpreadsheetMetadataData extends DataClass
       map['last_known_remote_modified_time'] = Variable<DateTime>(
         lastKnownRemoteModifiedTime,
       );
+    }
+    if (!nullToAbsent || lastSuccessfulSyncAt != null) {
+      map['last_successful_sync_at'] = Variable<DateTime>(lastSuccessfulSyncAt);
     }
     return map;
   }
@@ -1343,6 +1373,9 @@ class SpreadsheetMetadataData extends DataClass
           lastKnownRemoteModifiedTime == null && nullToAbsent
           ? const Value.absent()
           : Value(lastKnownRemoteModifiedTime),
+      lastSuccessfulSyncAt: lastSuccessfulSyncAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSuccessfulSyncAt),
     );
   }
 
@@ -1359,6 +1392,9 @@ class SpreadsheetMetadataData extends DataClass
       lastKnownRemoteModifiedTime: serializer.fromJson<DateTime?>(
         json['lastKnownRemoteModifiedTime'],
       ),
+      lastSuccessfulSyncAt: serializer.fromJson<DateTime?>(
+        json['lastSuccessfulSyncAt'],
+      ),
     );
   }
   @override
@@ -1372,6 +1408,9 @@ class SpreadsheetMetadataData extends DataClass
       'lastKnownRemoteModifiedTime': serializer.toJson<DateTime?>(
         lastKnownRemoteModifiedTime,
       ),
+      'lastSuccessfulSyncAt': serializer.toJson<DateTime?>(
+        lastSuccessfulSyncAt,
+      ),
     };
   }
 
@@ -1381,6 +1420,7 @@ class SpreadsheetMetadataData extends DataClass
     String? worksheetName,
     DateTime? lastImportedAt,
     Value<DateTime?> lastKnownRemoteModifiedTime = const Value.absent(),
+    Value<DateTime?> lastSuccessfulSyncAt = const Value.absent(),
   }) => SpreadsheetMetadataData(
     userId: userId ?? this.userId,
     fileId: fileId ?? this.fileId,
@@ -1389,6 +1429,9 @@ class SpreadsheetMetadataData extends DataClass
     lastKnownRemoteModifiedTime: lastKnownRemoteModifiedTime.present
         ? lastKnownRemoteModifiedTime.value
         : this.lastKnownRemoteModifiedTime,
+    lastSuccessfulSyncAt: lastSuccessfulSyncAt.present
+        ? lastSuccessfulSyncAt.value
+        : this.lastSuccessfulSyncAt,
   );
   SpreadsheetMetadataData copyWithCompanion(SpreadsheetMetadataCompanion data) {
     return SpreadsheetMetadataData(
@@ -1403,6 +1446,9 @@ class SpreadsheetMetadataData extends DataClass
       lastKnownRemoteModifiedTime: data.lastKnownRemoteModifiedTime.present
           ? data.lastKnownRemoteModifiedTime.value
           : this.lastKnownRemoteModifiedTime,
+      lastSuccessfulSyncAt: data.lastSuccessfulSyncAt.present
+          ? data.lastSuccessfulSyncAt.value
+          : this.lastSuccessfulSyncAt,
     );
   }
 
@@ -1413,7 +1459,8 @@ class SpreadsheetMetadataData extends DataClass
           ..write('fileId: $fileId, ')
           ..write('worksheetName: $worksheetName, ')
           ..write('lastImportedAt: $lastImportedAt, ')
-          ..write('lastKnownRemoteModifiedTime: $lastKnownRemoteModifiedTime')
+          ..write('lastKnownRemoteModifiedTime: $lastKnownRemoteModifiedTime, ')
+          ..write('lastSuccessfulSyncAt: $lastSuccessfulSyncAt')
           ..write(')'))
         .toString();
   }
@@ -1425,6 +1472,7 @@ class SpreadsheetMetadataData extends DataClass
     worksheetName,
     lastImportedAt,
     lastKnownRemoteModifiedTime,
+    lastSuccessfulSyncAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -1435,7 +1483,8 @@ class SpreadsheetMetadataData extends DataClass
           other.worksheetName == this.worksheetName &&
           other.lastImportedAt == this.lastImportedAt &&
           other.lastKnownRemoteModifiedTime ==
-              this.lastKnownRemoteModifiedTime);
+              this.lastKnownRemoteModifiedTime &&
+          other.lastSuccessfulSyncAt == this.lastSuccessfulSyncAt);
 }
 
 class SpreadsheetMetadataCompanion
@@ -1445,6 +1494,7 @@ class SpreadsheetMetadataCompanion
   final Value<String> worksheetName;
   final Value<DateTime> lastImportedAt;
   final Value<DateTime?> lastKnownRemoteModifiedTime;
+  final Value<DateTime?> lastSuccessfulSyncAt;
   final Value<int> rowid;
   const SpreadsheetMetadataCompanion({
     this.userId = const Value.absent(),
@@ -1452,6 +1502,7 @@ class SpreadsheetMetadataCompanion
     this.worksheetName = const Value.absent(),
     this.lastImportedAt = const Value.absent(),
     this.lastKnownRemoteModifiedTime = const Value.absent(),
+    this.lastSuccessfulSyncAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SpreadsheetMetadataCompanion.insert({
@@ -1460,6 +1511,7 @@ class SpreadsheetMetadataCompanion
     required String worksheetName,
     required DateTime lastImportedAt,
     this.lastKnownRemoteModifiedTime = const Value.absent(),
+    this.lastSuccessfulSyncAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : userId = Value(userId),
        fileId = Value(fileId),
@@ -1471,6 +1523,7 @@ class SpreadsheetMetadataCompanion
     Expression<String>? worksheetName,
     Expression<DateTime>? lastImportedAt,
     Expression<DateTime>? lastKnownRemoteModifiedTime,
+    Expression<DateTime>? lastSuccessfulSyncAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1480,6 +1533,8 @@ class SpreadsheetMetadataCompanion
       if (lastImportedAt != null) 'last_imported_at': lastImportedAt,
       if (lastKnownRemoteModifiedTime != null)
         'last_known_remote_modified_time': lastKnownRemoteModifiedTime,
+      if (lastSuccessfulSyncAt != null)
+        'last_successful_sync_at': lastSuccessfulSyncAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1490,6 +1545,7 @@ class SpreadsheetMetadataCompanion
     Value<String>? worksheetName,
     Value<DateTime>? lastImportedAt,
     Value<DateTime?>? lastKnownRemoteModifiedTime,
+    Value<DateTime?>? lastSuccessfulSyncAt,
     Value<int>? rowid,
   }) {
     return SpreadsheetMetadataCompanion(
@@ -1499,6 +1555,7 @@ class SpreadsheetMetadataCompanion
       lastImportedAt: lastImportedAt ?? this.lastImportedAt,
       lastKnownRemoteModifiedTime:
           lastKnownRemoteModifiedTime ?? this.lastKnownRemoteModifiedTime,
+      lastSuccessfulSyncAt: lastSuccessfulSyncAt ?? this.lastSuccessfulSyncAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1523,6 +1580,11 @@ class SpreadsheetMetadataCompanion
         lastKnownRemoteModifiedTime.value,
       );
     }
+    if (lastSuccessfulSyncAt.present) {
+      map['last_successful_sync_at'] = Variable<DateTime>(
+        lastSuccessfulSyncAt.value,
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1537,6 +1599,7 @@ class SpreadsheetMetadataCompanion
           ..write('worksheetName: $worksheetName, ')
           ..write('lastImportedAt: $lastImportedAt, ')
           ..write('lastKnownRemoteModifiedTime: $lastKnownRemoteModifiedTime, ')
+          ..write('lastSuccessfulSyncAt: $lastSuccessfulSyncAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2067,6 +2130,7 @@ typedef $$SpreadsheetMetadataTableCreateCompanionBuilder =
       required String worksheetName,
       required DateTime lastImportedAt,
       Value<DateTime?> lastKnownRemoteModifiedTime,
+      Value<DateTime?> lastSuccessfulSyncAt,
       Value<int> rowid,
     });
 typedef $$SpreadsheetMetadataTableUpdateCompanionBuilder =
@@ -2076,6 +2140,7 @@ typedef $$SpreadsheetMetadataTableUpdateCompanionBuilder =
       Value<String> worksheetName,
       Value<DateTime> lastImportedAt,
       Value<DateTime?> lastKnownRemoteModifiedTime,
+      Value<DateTime?> lastSuccessfulSyncAt,
       Value<int> rowid,
     });
 
@@ -2110,6 +2175,11 @@ class $$SpreadsheetMetadataTableFilterComposer
 
   ColumnFilters<DateTime> get lastKnownRemoteModifiedTime => $composableBuilder(
     column: $table.lastKnownRemoteModifiedTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSuccessfulSyncAt => $composableBuilder(
+    column: $table.lastSuccessfulSyncAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2148,6 +2218,11 @@ class $$SpreadsheetMetadataTableOrderingComposer
         column: $table.lastKnownRemoteModifiedTime,
         builder: (column) => ColumnOrderings(column),
       );
+
+  ColumnOrderings<DateTime> get lastSuccessfulSyncAt => $composableBuilder(
+    column: $table.lastSuccessfulSyncAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SpreadsheetMetadataTableAnnotationComposer
@@ -2180,6 +2255,11 @@ class $$SpreadsheetMetadataTableAnnotationComposer
         column: $table.lastKnownRemoteModifiedTime,
         builder: (column) => column,
       );
+
+  GeneratedColumn<DateTime> get lastSuccessfulSyncAt => $composableBuilder(
+    column: $table.lastSuccessfulSyncAt,
+    builder: (column) => column,
+  );
 }
 
 class $$SpreadsheetMetadataTableTableManager
@@ -2231,6 +2311,7 @@ class $$SpreadsheetMetadataTableTableManager
                 Value<DateTime> lastImportedAt = const Value.absent(),
                 Value<DateTime?> lastKnownRemoteModifiedTime =
                     const Value.absent(),
+                Value<DateTime?> lastSuccessfulSyncAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SpreadsheetMetadataCompanion(
                 userId: userId,
@@ -2238,6 +2319,7 @@ class $$SpreadsheetMetadataTableTableManager
                 worksheetName: worksheetName,
                 lastImportedAt: lastImportedAt,
                 lastKnownRemoteModifiedTime: lastKnownRemoteModifiedTime,
+                lastSuccessfulSyncAt: lastSuccessfulSyncAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2248,6 +2330,7 @@ class $$SpreadsheetMetadataTableTableManager
                 required DateTime lastImportedAt,
                 Value<DateTime?> lastKnownRemoteModifiedTime =
                     const Value.absent(),
+                Value<DateTime?> lastSuccessfulSyncAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SpreadsheetMetadataCompanion.insert(
                 userId: userId,
@@ -2255,6 +2338,7 @@ class $$SpreadsheetMetadataTableTableManager
                 worksheetName: worksheetName,
                 lastImportedAt: lastImportedAt,
                 lastKnownRemoteModifiedTime: lastKnownRemoteModifiedTime,
+                lastSuccessfulSyncAt: lastSuccessfulSyncAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

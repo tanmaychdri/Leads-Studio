@@ -28,6 +28,17 @@ class AppTheme {
         centerTitle: false,
         iconTheme: IconThemeData(color: AppColors.textPrimaryLight),
       ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: AppColors.backgroundLight,
+        surfaceTintColor: Colors.transparent,
+      ),
+      datePickerTheme: const DatePickerThemeData(
+        backgroundColor: AppColors.backgroundLight,
+        surfaceTintColor: Colors.transparent,
+      ),
+      timePickerTheme: const TimePickerThemeData(
+        backgroundColor: AppColors.backgroundLight,
+      ),
     );
   }
 
@@ -58,6 +69,17 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
         iconTheme: IconThemeData(color: AppColors.textPrimaryDark),
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: AppColors.backgroundDark,
+        surfaceTintColor: Colors.transparent,
+      ),
+      datePickerTheme: const DatePickerThemeData(
+        backgroundColor: AppColors.backgroundDark,
+        surfaceTintColor: Colors.transparent,
+      ),
+      timePickerTheme: const TimePickerThemeData(
+        backgroundColor: AppColors.backgroundDark,
       ),
     );
   }

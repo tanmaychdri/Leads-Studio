@@ -2,6 +2,7 @@ class ColumnMapper {
   final Map<String, int> _fieldIndices = {};
   
   static const Map<String, List<String>> _knownAliases = {
+    'id': ['leadflow_id', '_leadflow_id_', 'leadflow id'],
     'clientName': ['name', 'client name', 'customer name', 'lead name', 'client'],
     'phoneNumber': ['phone', 'mobile', 'mobile number', 'phone number', 'contact', 'cell'],
     'email': ['email', 'e-mail', 'email address'],
@@ -45,6 +46,10 @@ class ColumnMapper {
   }
 
   int? getIndex(String field) => _fieldIndices[field];
+  
+  void setIndex(String field, int index) {
+    _fieldIndices[field] = index;
+  }
 
   /// Returns all column names that were mapped as custom fields (not in standard aliases)
   List<String> getCustomFieldNames() {

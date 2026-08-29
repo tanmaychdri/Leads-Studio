@@ -53,9 +53,9 @@ class _LeadsStudioAppState extends ConsumerState<LeadsStudioApp> {
           goRouter.push('/leads/${parts[1]}');
         }
       } else if (payload == 'daily_summary') {
-        goRouter.push('/follow-ups');
+        goRouter.pushNamed('follow-ups');
       } else if (payload == 'overdue_summary') {
-        goRouter.push('/follow-ups');
+        goRouter.pushNamed('follow-ups');
       }
     });
   }

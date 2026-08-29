@@ -47,6 +47,8 @@ class AppScaffold extends ConsumerWidget {
                   color: Colors.transparent,
                   child: GlassContainer(
                     width: 250,
+                    opacity: 0.2,
+                    border: true,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -267,13 +269,22 @@ class AppScaffold extends ConsumerWidget {
             ),
           );
 
-    return Scaffold(
-      backgroundColor: Colors.transparent, // Important for ambient background
-      body: Stack(
-        children: [
-          AmbientBackground(pageIndex: navigationShell.currentIndex),
-          scaffoldContent,
-        ],
+    return PopScope(
+      canPop: navigationShell.currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (navigationShell.currentIndex != 0) {
+          navigationShell.goBranch(0);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent, // Important for ambient background
+        body: Stack(
+          children: [
+            AmbientBackground(pageIndex: navigationShell.currentIndex),
+            scaffoldContent,
+          ],
+        ),
       ),
     );
   }

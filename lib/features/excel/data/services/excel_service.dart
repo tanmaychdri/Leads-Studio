@@ -90,6 +90,7 @@ class ExcelService {
       }
 
       // Read standard fields
+      final id = DataParsers.parseString(getCell('id'));
       final clientName = DataParsers.parseString(getCell('clientName'));
       final phoneNumber = DataParsers.parseString(getCell('phoneNumber'));
       
@@ -108,6 +109,7 @@ class ExcelService {
 
       // Build Lead
       leads.add(Lead(
+        id: id,
         clientName: clientName,
         phoneNumber: phoneNumber,
         email: DataParsers.parseString(getCell('email')),
@@ -154,5 +156,151 @@ class ExcelService {
       await originalFile.delete();
     }
     await tempFile.rename(_loadedFilePath!);
+  }
+
+  /// Safely adds or updates a lead row in the workbook by LeadFlow_ID.
+  Future<void> addOrUpdateLead(String sheetName, Lead lead) async {
+    if (_workbook == null) throw Exception('Workbook not loaded.');
+    var table = _workbook!.tables[sheetName];
+    if (table == null) throw Exception('Worksheet "$sheetName" not found.');
+
+    final rows = table.rows;
+    if (rows.isEmpty) return;
+
+    int headerRowIndex = -1;
+    for (int i = 0; i < rows.length; i++) {
+      if (rows[i].any((cell) => cell != null && cell.value != null)) {
+        headerRowIndex = i;
+        break;
+      }
+    }
+    if (headerRowIndex == -1) return;
+
+    final headerRow = rows[headerRowIndex];
+    final headers = headerRow.map((cell) => DataParsers.parseString(cell) ?? '').toList();
+    final mapper = ColumnMapper(headers);
+
+    int? idColIndex = mapper.getIndex('id');
+    
+    // If LeadFlow_ID column doesn't exist, append it to the header
+    if (idColIndex == null) {
+      idColIndex = table.maxColumns;
+      table.updateCell(CellIndex.indexByColumnRow(columnIndex: idColIndex, rowIndex: headerRowIndex), TextCellValue('LeadFlow_ID'));
+      mapper.setIndex('id', idColIndex);
+    }
+
+    int? targetRowIndex;
+    for (int i = headerRowIndex + 1; i < rows.length; i++) {
+      final row = rows[i];
+      if (idColIndex < row.length) {
+        final idVal = DataParsers.parseString(row[idColIndex]);
+        if (idVal == lead.id) {
+          targetRowIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (targetRowIndex == null) {
+      int? nameColIndex = mapper.getIndex('clientName');
+      int? phoneColIndex = mapper.getIndex('phoneNumber');
+      
+      for (int i = headerRowIndex + 1; i < rows.length; i++) {
+        final row = rows[i];
+        final nameVal = nameColIndex != null && nameColIndex < row.length ? DataParsers.parseString(row[nameColIndex]) : null;
+        final phoneVal = phoneColIndex != null && phoneColIndex < row.length ? DataParsers.parseString(row[phoneColIndex]) : null;
+        
+        bool nameMatches = (nameVal == lead.clientName);
+        bool phoneMatches = (phoneVal == lead.phoneNumber);
+        
+        if (nameMatches && phoneMatches && (nameVal != null || phoneVal != null)) {
+          targetRowIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (targetRowIndex == null) {
+      targetRowIndex = table.maxRows;
+    }
+    
+    // Always ensure the ID is explicitly written to the cell for this row!
+    table.updateCell(CellIndex.indexByColumnRow(columnIndex: idColIndex, rowIndex: targetRowIndex), TextCellValue(lead.id));
+
+    void setCell(String field, dynamic value) {
+      int? colIdx = mapper.getIndex(field);
+      if (colIdx == null) {
+        colIdx = table.maxColumns;
+        table.updateCell(CellIndex.indexByColumnRow(columnIndex: colIdx, rowIndex: headerRowIndex), TextCellValue(field));
+        mapper.setIndex(field, colIdx);
+      }
+      final cellIndex = CellIndex.indexByColumnRow(columnIndex: colIdx, rowIndex: targetRowIndex!);
+      
+      if (value == null) {
+         table.updateCell(cellIndex, TextCellValue(''));
+      } else if (value is String) {
+         table.updateCell(cellIndex, TextCellValue(value));
+      } else if (value is double) {
+         table.updateCell(cellIndex, DoubleCellValue(value));
+      } else if (value is DateTime) {
+         // Use DateTimeCellValue
+         table.updateCell(cellIndex, DateTimeCellValue(year: value.year, month: value.month, day: value.day, hour: value.hour, minute: value.minute, second: value.second));
+      }
+    }
+
+    setCell('clientName', lead.clientName);
+    setCell('phoneNumber', lead.phoneNumber);
+    setCell('email', lead.email);
+    setCell('eventType', lead.eventType);
+    setCell('eventDate', lead.eventDate);
+    setCell('leadSource', lead.leadSource);
+    setCell('status', lead.status);
+    setCell('lastContactDate', lead.lastContactDate);
+    setCell('nextFollowUpDate', lead.nextFollowUpDate);
+    setCell('reminderDate', lead.reminderDate);
+    setCell('notes', lead.notes);
+    setCell('budget', lead.budget);
+    setCell('assignedPerson', lead.assignedPerson);
+
+    for (final entry in lead.customFields.entries) {
+      setCell(entry.key, entry.value);
+    }
+  }
+
+  /// Safely removes a lead row from the workbook.
+  Future<void> removeLead(String sheetName, String leadId) async {
+    if (_workbook == null) throw Exception('Workbook not loaded.');
+    var table = _workbook!.tables[sheetName];
+    if (table == null) throw Exception('Worksheet "$sheetName" not found.');
+
+    final rows = table.rows;
+    if (rows.isEmpty) return;
+
+    int headerRowIndex = -1;
+    for (int i = 0; i < rows.length; i++) {
+      if (rows[i].any((cell) => cell != null && cell.value != null)) {
+        headerRowIndex = i;
+        break;
+      }
+    }
+    if (headerRowIndex == -1) return;
+
+    final headerRow = rows[headerRowIndex];
+    final headers = headerRow.map((cell) => DataParsers.parseString(cell) ?? '').toList();
+    final mapper = ColumnMapper(headers);
+    
+    int? idColIndex = mapper.getIndex('id');
+    if (idColIndex == null) return; // No ID column, cannot safely delete.
+
+    for (int i = headerRowIndex + 1; i < rows.length; i++) {
+      final row = rows[i];
+      if (idColIndex < row.length) {
+        final idVal = DataParsers.parseString(row[idColIndex]);
+        if (idVal == leadId) {
+          table.removeRow(i);
+          break; // Stop after first match
+        }
+      }
+    }
   }
 }

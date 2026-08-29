@@ -1,8 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:leads_studio/features/drive/presentation/providers/drive_provider.dart';
-import 'package:leads_studio/core/widgets/glass/ambient_background.dart';
 import 'package:leads_studio/core/widgets/glass/glass_container.dart';
 import 'package:leads_studio/core/widgets/glass/glass_button.dart';
 import 'package:leads_studio/app/theme/app_colors.dart';
@@ -17,7 +17,15 @@ class SettingsScreen extends ConsumerWidget {
 
     return Stack(
       children: [
-        const AmbientBackground(pageIndex: 3), // Unique index for different glow position
+        // Premium glass backdrop blur
+        ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+            child: Container(
+              color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.3),
+            ),
+          ),
+        ),
         Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(

@@ -59,7 +59,14 @@ class GlassButton extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                   fontSize: 16,
                 ),
-                child: Center(child: child),
+                child: IconTheme(
+                  data: IconThemeData(
+                    color: isPrimary 
+                        ? Colors.white 
+                        : (isDark ? Colors.white : AppColors.textPrimaryLight),
+                  ),
+                  child: Center(child: child),
+                ),
               ),
             ),
           ),

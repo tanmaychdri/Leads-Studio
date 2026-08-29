@@ -9,6 +9,7 @@ import 'package:leads_studio/features/dashboard/presentation/widgets/dashboard_s
 import 'package:leads_studio/core/widgets/glass/glass_container.dart';
 import 'package:leads_studio/core/theme/glass_theme.dart';
 import 'package:leads_studio/app/theme/app_colors.dart';
+import 'package:leads_studio/core/sync/widgets/sync_status_widget.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -58,6 +59,10 @@ class DashboardScreen extends ConsumerWidget {
                         color: isDark ? Colors.white70 : Colors.black54,
                       ),
                 ),
+                const SizedBox(height: 24),
+                
+                const SyncStatusWidget(),
+                
                 const SizedBox(height: 32),
 
                 // SUMMARY CARDS
@@ -170,7 +175,7 @@ class DashboardScreen extends ConsumerWidget {
                     Expanded(
                       child: GlassContainer(
                         padding: const EdgeInsets.symmetric(vertical: 24),
-                        onTap: () => context.go('/follow-ups'),
+                        onTap: () => context.goNamed('follow-ups'),
                         child: const Column(
                           children: [
                             Icon(Icons.calendar_month, size: 32, color: AppColors.secondaryAccent),

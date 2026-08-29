@@ -17,20 +17,25 @@ import 'package:leads_studio/features/drive/presentation/screens/select_file_scr
 import 'package:leads_studio/features/excel/presentation/screens/worksheet_selection_screen.dart';
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  // Only rebuild GoRouter if authentication status changes (login/logout)
-  final isAuth = ref.watch(authProvider.select((state) => state.user != null));
+  // Create a Listenable that updates when auth state changes
+  final authNotifier = ValueNotifier<bool>(false);
+  
+  ref.listen(
+    authProvider.select((state) => state.user != null),
+    (_, isAuth) {
+      authNotifier.value = isAuth;
+    },
+  );
 
   return GoRouter(
     initialLocation: '/dashboard',
+    refreshListenable: authNotifier,
     redirect: (context, state) {
       final isLoggingIn = state.matchedLocation == '/login';
-
-      // Read current state directly to avoid rebuilding Router
       final authState = ref.read(authProvider);
+      final isAuth = authState.user != null;
 
-      if (authState.isLoading && !isAuth) {
-        return null; // Wait for initialization
-      }
+
 
       if (!isAuth && !isLoggingIn) {
         return '/login';
@@ -61,7 +66,14 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const SettingsScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          opaque: false,
+        ),
         routes: [
           GoRoute(
             path: 'notifications',
@@ -129,6 +141,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
+                name: 'follow-ups',
                 path: '/follow-ups',
                 builder: (context, state) => const FollowUpsScreen(),
               ),

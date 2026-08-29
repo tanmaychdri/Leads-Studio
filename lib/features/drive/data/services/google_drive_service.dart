@@ -89,4 +89,48 @@ class GoogleDriveService {
       throw Exception('Failed to download file from Google Drive: $e');
     }
   }
+
+  /// Fetches the latest modifiedTime of a file without downloading it.
+  Future<DateTime?> getFileModifiedTime(String fileId) async {
+    final api = await _getDriveApi();
+    if (api == null) throw Exception('Not authenticated with Google');
+
+    try {
+      final fileMeta = await api.files.get(
+        fileId,
+        $fields: 'modifiedTime',
+      ) as drive.File;
+      
+      return fileMeta.modifiedTime;
+    } catch (e) {
+      throw Exception('Failed to fetch file metadata: $e');
+    }
+  }
+
+  /// Uploads a local Excel file to update an existing Google Drive file.
+  /// For Google Sheets, this seamlessly overwrites the content while preserving the ID.
+  Future<void> updateExcelFile(String fileId, String localFilePath) async {
+    final api = await _getDriveApi();
+    if (api == null) throw Exception('Not authenticated with Google');
+
+    try {
+      final localFile = File(localFilePath);
+      final media = drive.Media(
+        localFile.openRead(),
+        localFile.lengthSync(),
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+
+
+      final driveFile = drive.File();
+      // Update the file binary content
+      await api.files.update(
+        driveFile,
+        fileId,
+        uploadMedia: media,
+      );
+    } catch (e) {
+      throw Exception('Failed to upload updated Excel file: $e');
+    }
+  }
 }

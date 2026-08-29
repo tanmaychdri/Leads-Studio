@@ -7,6 +7,7 @@ class SpreadsheetMetadata extends Table {
   
   DateTimeColumn get lastImportedAt => dateTime()();
   DateTimeColumn get lastKnownRemoteModifiedTime => dateTime().nullable()();
+  DateTimeColumn get lastSuccessfulSyncAt => dateTime().nullable()();
   
   @override
   Set<Column> get primaryKey => {userId}; // 1 active spreadsheet per user

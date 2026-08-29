@@ -69,9 +69,31 @@ final goRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      StatefulShellRoute.indexedStack(
+      StatefulShellRoute(
         builder: (context, state, navigationShell) {
           return AppScaffold(navigationShell: navigationShell);
+        },
+        navigatorContainerBuilder: (context, navigationShell, children) {
+          return Stack(
+            children: children.asMap().entries.map((entry) {
+              final index = entry.key;
+              final child = entry.value;
+              final isActive = index == navigationShell.currentIndex;
+
+              return AnimatedOpacity(
+                opacity: isActive ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOut,
+                child: IgnorePointer(
+                  ignoring: !isActive,
+                  child: TickerMode(
+                    enabled: isActive,
+                    child: child,
+                  ),
+                ),
+              );
+            }).toList(),
+          );
         },
         branches: [
           StatefulShellBranch(

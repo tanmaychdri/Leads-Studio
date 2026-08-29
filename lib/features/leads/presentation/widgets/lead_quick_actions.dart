@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:leads_studio/features/database/data/app_database.dart';
 import 'package:leads_studio/features/leads/presentation/providers/leads_provider.dart';
+import 'package:leads_studio/core/widgets/glass/glass_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
@@ -38,6 +39,8 @@ class LeadQuickActions extends ConsumerWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Delete Lead?'),
         content: const Text('Are you sure you want to delete this lead? This can be restored later.'),
         actions: [
@@ -68,22 +71,39 @@ class LeadQuickActions extends ConsumerWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         if (lead.phoneNumber != null && lead.phoneNumber!.isNotEmpty)
-          ElevatedButton.icon(
-            onPressed: () => _makePhoneCall(context),
-            icon: Icon(isDesktop ? Icons.copy : Icons.call),
-            label: Text(isDesktop ? 'Copy Phone' : 'Call Lead'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green.shade100, foregroundColor: Colors.green.shade900),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: GlassButton(
+                onPressed: () => _makePhoneCall(context),
+                isPrimary: true,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(isDesktop ? Icons.copy : Icons.call, size: 18, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(isDesktop ? 'Copy' : 'Call'),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ElevatedButton.icon(
-          onPressed: () => context.push('/leads/edit/${lead.id}'),
-          icon: const Icon(Icons.edit),
-          label: const Text('Edit'),
-        ),
-        ElevatedButton.icon(
-          onPressed: () => _softDeleteLead(context, ref),
-          icon: const Icon(Icons.delete),
-          label: const Text('Delete'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade100, foregroundColor: Colors.red.shade900),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: GlassButton(
+              onPressed: () => _softDeleteLead(context, ref),
+              isPrimary: false,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.delete, size: 18, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text('Delete', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ),
         ),
       ],
     );

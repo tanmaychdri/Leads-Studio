@@ -7,6 +7,11 @@ import 'package:leads_studio/features/database/data/app_database.dart';
 import 'package:leads_studio/features/leads/data/models/lead_status.dart';
 import 'package:leads_studio/features/leads/presentation/providers/lead_details_provider.dart';
 import 'package:leads_studio/features/leads/presentation/providers/leads_provider.dart';
+import 'package:leads_studio/core/widgets/glass/glass_text_field.dart';
+import 'package:leads_studio/core/widgets/glass/glass_container.dart';
+import 'package:leads_studio/core/widgets/glass/glass_button.dart';
+import 'package:leads_studio/core/theme/glass_theme.dart';
+import 'package:leads_studio/app/theme/app_colors.dart';
 
 class LeadFormScreen extends ConsumerStatefulWidget {
   final String? existingLeadId;
@@ -63,13 +68,14 @@ class _LeadFormScreenState extends ConsumerState<LeadFormScreen> {
         _eventDate = _existingLead!.eventDate;
         _followUpDate = _existingLead!.nextFollowUpDate;
         
-        final statusEnum = LeadStatus.fromString(_existingLead!.status);
-        _selectedStatus = statusEnum.name;
+        try {
+          _selectedStatus = LeadStatus.values.firstWhere(
+            (e) => e.displayName == _existingLead!.status
+          ).name;
+        } catch (_) {}
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading lead: $e')));
-      }
+      debugPrint(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -94,7 +100,7 @@ class _LeadFormScreenState extends ConsumerState<LeadFormScreen> {
       lastDate: DateTime(2100),
     );
     
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         if (isEventDate) {
           _eventDate = picked;
@@ -142,7 +148,6 @@ class _LeadFormScreenState extends ConsumerState<LeadFormScreen> {
           nextFollowUpDate: _followUpDate,
           notes: _notesController.text.trim(),
         );
-        // Refresh details provider
         ref.invalidate(leadDetailsProvider(_existingLead!.id));
       }
       
@@ -164,12 +169,16 @@ class _LeadFormScreenState extends ConsumerState<LeadFormScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(backgroundColor: Colors.transparent, body: Center(child: CircularProgressIndicator()));
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text(_existingLead == null ? 'Add Lead' : 'Edit Lead'),
+        title: Text(_existingLead == null ? 'Add Lead' : 'Edit Lead', style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
         actions: [
           if (_isSaving)
             const Padding(
@@ -177,123 +186,191 @@ class _LeadFormScreenState extends ConsumerState<LeadFormScreen> {
               child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
             )
           else
-            TextButton(
-              onPressed: _saveLead,
-              child: const Text('SAVE'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: GlassButton(
+                onPressed: _saveLead,
+                isPrimary: true,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: const Text('SAVE'),
+              ),
             ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 120.0, top: 16.0),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Client Name *',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+              _buildSectionHeader(context, 'CLIENT INFORMATION'),
+              const SizedBox(height: 12),
+              GlassContainer(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  children: [
+                    GlassTextField(
+                      controller: _nameController,
+                      labelText: 'Client Name *',
+                      prefixIcon: Icon(Icons.person, color: isDark ? Colors.white70 : Colors.black54),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    GlassTextField(
+                      controller: _phoneController,
+                      labelText: 'Phone Number',
+                      prefixIcon: Icon(Icons.phone, color: isDark ? Colors.white70 : Colors.black54),
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 16),
+                    GlassTextField(
+                      controller: _emailController,
+                      labelText: 'Email Address',
+                      prefixIcon: Icon(Icons.email, color: isDark ? Colors.white70 : Colors.black54),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: GlassTheme.getSurfaceColor(context, opacity: 0.5),
+                        borderRadius: GlassTheme.radiusSmall,
+                        border: Border.all(color: GlassTheme.getBorderColor(context, opacity: 0.3)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedStatus,
+                          isExpanded: true,
+                          icon: Icon(Icons.arrow_drop_down, color: isDark ? Colors.white70 : Colors.black54),
+                          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16),
+                          items: LeadStatus.values.map((status) {
+                            return DropdownMenuItem(
+                              value: status.name,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.label, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                                  const SizedBox(width: 12),
+                                  Text(status.displayName),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            if (val != null) setState(() => _selectedStatus = val);
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
               
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.phone),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 16),
-              
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email Address',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              
-              DropdownButtonFormField<String>(
-                value: _selectedStatus,
-                decoration: const InputDecoration(
-                  labelText: 'Status',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.label),
-                ),
-                items: LeadStatus.values.map((status) {
-                  return DropdownMenuItem(
-                    value: status.name,
-                    child: Text(status.displayName),
-                  );
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedStatus = val);
-                },
-              ),
-              const SizedBox(height: 24),
-              
-              Text('Event Information', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 16),
-              
-              TextFormField(
-                controller: _eventController,
-                decoration: const InputDecoration(
-                  labelText: 'Event Type (e.g. Wedding)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.event),
+              _buildSectionHeader(context, 'EVENT INFORMATION'),
+              const SizedBox(height: 12),
+              GlassContainer(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  children: [
+                    GlassTextField(
+                      controller: _eventController,
+                      labelText: 'Event Type (e.g. Wedding)',
+                      prefixIcon: Icon(Icons.event, color: isDark ? Colors.white70 : Colors.black54),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDateSelector(
+                      context: context,
+                      title: _eventDate == null ? 'Select Event Date' : DateFormat('dd MMM yyyy').format(_eventDate!),
+                      icon: Icons.calendar_month,
+                      onTap: () => _selectDate(context, true),
+                      onClear: _eventDate != null ? () => setState(() => _eventDate = null) : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDateSelector(
+                      context: context,
+                      title: _followUpDate == null ? 'Set Follow-up Date' : DateFormat('dd MMM yyyy').format(_followUpDate!),
+                      icon: Icons.notification_important,
+                      onTap: () => _selectDate(context, false),
+                      onClear: _followUpDate != null ? () => setState(() => _followUpDate = null) : null,
+                      isHighlight: true,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
               
-              ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                  side: BorderSide(color: Colors.grey.shade400),
-                ),
-                leading: const Icon(Icons.calendar_month),
-                title: Text(_eventDate == null ? 'Select Event Date' : DateFormat('dd MMM yyyy').format(_eventDate!)),
-                trailing: _eventDate != null
-                    ? IconButton(icon: const Icon(Icons.clear), onPressed: () => setState(() => _eventDate = null))
-                    : null,
-                onTap: () => _selectDate(context, true),
-              ),
-              const SizedBox(height: 16),
-              
-              ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                  side: BorderSide(color: Colors.grey.shade400),
-                ),
-                leading: const Icon(Icons.notification_important),
-                title: Text(_followUpDate == null ? 'Set Follow-up Date' : DateFormat('dd MMM yyyy').format(_followUpDate!)),
-                trailing: _followUpDate != null
-                    ? IconButton(icon: const Icon(Icons.clear), onPressed: () => setState(() => _followUpDate = null))
-                    : null,
-                onTap: () => _selectDate(context, false),
-              ),
-              const SizedBox(height: 24),
-              
-              TextFormField(
+              _buildSectionHeader(context, 'ADDITIONAL NOTES'),
+              const SizedBox(height: 12),
+              GlassTextField(
                 controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes',
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
+                labelText: 'Notes',
                 maxLines: 4,
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(left: 8.0),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+              color: isDark ? Colors.white70 : Colors.black54,
+            ),
+      ),
+    );
+  }
+
+  Widget _buildDateSelector({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+    VoidCallback? onClear,
+    bool isHighlight = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isHighlight ? AppColors.warning : (isDark ? Colors.white70 : Colors.black54);
+    
+    return InkWell(
+      onTap: onTap,
+      borderRadius: GlassTheme.radiusSmall,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: GlassTheme.getSurfaceColor(context, opacity: 0.5),
+          borderRadius: GlassTheme.radiusSmall,
+          border: Border.all(color: GlassTheme.getBorderColor(context, opacity: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+            if (onClear != null)
+              GestureDetector(
+                onTap: onClear,
+                child: Icon(Icons.clear, size: 20, color: isDark ? Colors.white54 : Colors.black54),
+              ),
+          ],
         ),
       ),
     );

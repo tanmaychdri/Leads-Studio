@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:leads_studio/features/database/data/app_database.dart';
 import 'package:leads_studio/features/follow_ups/domain/follow_up_priority.dart';
 import 'package:leads_studio/features/follow_ups/presentation/widgets/quick_reschedule_dialog.dart';
+import 'package:leads_studio/core/widgets/glass/glass_container.dart';
+import 'package:leads_studio/core/widgets/glass/glass_button.dart';
+import 'package:leads_studio/app/theme/app_colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
@@ -48,101 +51,53 @@ class FollowUpCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color stripColor;
-    String dateLabel = '';
-    
-    switch (priority) {
-      case FollowUpPriority.critical:
-        stripColor = Colors.red;
-        if (lead.nextFollowUpDate != null) {
-          final diff = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day)
-              .difference(DateTime(lead.nextFollowUpDate!.year, lead.nextFollowUpDate!.month, lead.nextFollowUpDate!.day))
-              .inDays;
-          dateLabel = '$diff days overdue';
-        }
-        break;
-      case FollowUpPriority.high:
-        stripColor = Colors.orange;
-        dateLabel = 'Today';
-        break;
-      case FollowUpPriority.medium:
-        stripColor = Colors.green;
-        if (lead.nextFollowUpDate != null) {
-          dateLabel = DateFormat('dd MMM yyyy').format(lead.nextFollowUpDate!);
-        }
-        break;
-      case FollowUpPriority.low:
-        stripColor = Colors.grey;
-        dateLabel = 'No date set';
-        break;
-      default:
-        stripColor = Colors.blueGrey;
-    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push('/leads/${lead.id}'),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(left: BorderSide(color: stripColor, width: 4)),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+    return GlassContainer(
+      onTap: () => context.push('/leads/${lead.id}'),
+      padding: const EdgeInsets.all(16.0),
+      blur: 0,
+      opacity: isDark ? 0.3 : 0.6,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        lead.clientName ?? 'Unknown Client',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (dateLabel.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: stripColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          dateLabel,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: stripColor,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
                 Text(
-                  lead.eventType ?? 'General Lead',
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                  lead.clientName ?? 'Unknown Client',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
+                if (lead.phoneNumber != null && lead.phoneNumber!.isNotEmpty)
+                  Row(
+                    children: [
+                      Icon(Icons.phone, size: 14, color: isDark ? Colors.white54 : Colors.black54),
+                      const SizedBox(width: 4),
+                      Text(
+                        lead.phoneNumber!,
+                        style: TextStyle(fontSize: 12, color: isDark ? Colors.white70 : Colors.black87),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _contactClient(context),
-                        icon: Icon(Platform.isWindows ? Icons.copy : Icons.call, size: 16),
-                        label: Text(Platform.isWindows ? 'Copy' : 'Contact'),
-                      ),
+                    Icon(
+                      Icons.calendar_month,
+                      size: 14,
+                      color: priority == FollowUpPriority.critical ? AppColors.error : AppColors.primaryAccent,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: FilledButton.tonalIcon(
-                        onPressed: () => _showRescheduleDialog(context),
-                        icon: const Icon(Icons.event, size: 16),
-                        label: const Text('Reschedule'),
+                    const SizedBox(width: 4),
+                    Text(
+                      lead.nextFollowUpDate != null
+                          ? DateFormat('dd MMM yyyy').format(lead.nextFollowUpDate!)
+                          : 'Not Scheduled',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: priority == FollowUpPriority.critical ? AppColors.error : AppColors.primaryAccent,
                       ),
                     ),
                   ],
@@ -150,7 +105,45 @@ class FollowUpCard extends StatelessWidget {
               ],
             ),
           ),
-        ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (lead.phoneNumber != null && lead.phoneNumber!.isNotEmpty)
+                GlassButton(
+                  onPressed: () => _contactClient(context),
+                  isPrimary: true,
+                  opacity: 0.9,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Platform.isWindows ? Icons.copy : Icons.call, size: 16, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Text(Platform.isWindows ? 'Copy' : 'Call', style: const TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                )
+              else
+                const SizedBox(height: 36),
+              const SizedBox(height: 8),
+              InkWell(
+                onTap: () => _showRescheduleDialog(context),
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                  child: Text(
+                    'Reschedule',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white54 : Colors.black54,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          )
+        ],
       ),
     );
   }

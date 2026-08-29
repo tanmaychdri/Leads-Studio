@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:leads_studio/features/auth/presentation/providers/auth_provider.dart';
+import 'package:leads_studio/core/widgets/glass/ambient_background.dart';
+import 'package:leads_studio/core/widgets/glass/glass_navigation.dart';
+import 'package:leads_studio/core/widgets/glass/glass_container.dart';
+import 'package:leads_studio/app/theme/app_colors.dart';
 
 class AppScaffold extends ConsumerWidget {
   const AppScaffold({
@@ -20,14 +24,16 @@ class AppScaffold extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 600px is a common breakpoint for tablet/desktop layouts
-    final isDesktop = MediaQuery.of(context).size.width >= 600;
+    final isDesktop = MediaQuery.of(context).size.width >= 768; // Adjusted breakpoint for glass layout
     final authState = ref.watch(authProvider);
     final user = authState.user;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final profileMenu = PopupMenuButton<String>(
       tooltip: 'Account Options',
       offset: const Offset(0, 50),
+      color: isDark ? AppColors.glassSurfaceDark : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onSelected: (value) {
         if (value == 'settings') {
           context.push('/settings');
@@ -44,7 +50,7 @@ class AppScaffold extends ConsumerWidget {
             children: [
               Text(
                 user?.displayName ?? 'User',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               Text(
                 user?.email ?? '',
@@ -73,100 +79,209 @@ class AppScaffold extends ConsumerWidget {
       ],
       child: CircleAvatar(
         radius: 20,
-        backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        backgroundColor: AppColors.primaryAccent.withValues(alpha: 0.2),
         backgroundImage: user?.photoUrl != null ? NetworkImage(user!.photoUrl!) : null,
         child: user?.photoUrl == null 
-            ? Icon(Icons.person, color: Theme.of(context).colorScheme.primary)
+            ? const Icon(Icons.person, color: AppColors.primaryAccent)
             : null,
       ),
     );
 
-    return Scaffold(
-      appBar: isDesktop 
-          ? null 
-          : AppBar(
-              title: const Text('Leads Studio', style: TextStyle(fontWeight: FontWeight.bold)),
-              actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: profileMenu,
-                ),
-              ],
-            ),
-      body: isDesktop
-          ? Row(
-              children: [
-                NavigationRail(
-                  selectedIndex: navigationShell.currentIndex,
-                  onDestinationSelected: _onNavigate,
-                  extended: MediaQuery.of(context).size.width >= 1024,
-                  labelType: MediaQuery.of(context).size.width >= 1024 
-                      ? NavigationRailLabelType.none 
-                      : NavigationRailLabelType.all,
-                  leading: Padding(
-                    padding: const EdgeInsets.only(bottom: 24.0, top: 16.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        profileMenu,
-                        if (MediaQuery.of(context).size.width >= 1024) ...[
-                          const SizedBox(height: 16),
+    Widget scaffoldContent = isDesktop
+        ? Row(
+            children: [
+              // Glass Sidebar
+              Container(
+                width: 250,
+                margin: const EdgeInsets.only(left: 16, top: 16, bottom: 16),
+                child: GlassContainer(
+                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.bubble_chart, color: AppColors.primaryAccent, size: 32),
+                          const SizedBox(width: 12),
                           const Text(
-                            'Leads Studio', 
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            textAlign: TextAlign.center,
+                            'Leads Studio',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                           ),
-                        ]
-                      ],
-                    ),
+                        ],
+                      ),
+                      const SizedBox(height: 48),
+                      _SidebarItem(
+                        icon: Icons.dashboard_outlined,
+                        selectedIcon: Icons.dashboard,
+                        label: 'Dashboard',
+                        isSelected: navigationShell.currentIndex == 0,
+                        onTap: () => _onNavigate(0),
+                      ),
+                      const SizedBox(height: 12),
+                      _SidebarItem(
+                        icon: Icons.people_outline,
+                        selectedIcon: Icons.people,
+                        label: 'Leads',
+                        isSelected: navigationShell.currentIndex == 1,
+                        onTap: () => _onNavigate(1),
+                      ),
+                      const SizedBox(height: 12),
+                      _SidebarItem(
+                        icon: Icons.calendar_today_outlined,
+                        selectedIcon: Icons.calendar_today,
+                        label: 'Follow-ups',
+                        isSelected: navigationShell.currentIndex == 2,
+                        onTap: () => _onNavigate(2),
+                      ),
+                      const Spacer(),
+                      const Divider(color: Colors.white24),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          profileMenu,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user?.displayName ?? 'User',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const Text(
+                                  'My Account',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          )
+                        ],
+                      )
+                    ],
                   ),
-                  destinations: const [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.dashboard_outlined),
-                      selectedIcon: Icon(Icons.dashboard),
-                      label: Text('Dashboard'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.people_outline),
-                      selectedIcon: Icon(Icons.people),
-                      label: Text('Leads'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.calendar_today_outlined),
-                      selectedIcon: Icon(Icons.calendar_today),
-                      label: Text('Follow-ups'),
-                    ),
-                  ],
                 ),
-                const VerticalDivider(thickness: 1, width: 1),
-                Expanded(child: navigationShell),
-              ],
-            )
-          : navigationShell,
-      bottomNavigationBar: isDesktop
-          ? null
-          : NavigationBar(
-              selectedIndex: navigationShell.currentIndex,
-              onDestinationSelected: _onNavigate,
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard),
-                  label: 'Dashboard',
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: navigationShell,
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.people_outline),
-                  selectedIcon: Icon(Icons.people),
-                  label: 'Leads',
+              ),
+            ],
+          )
+        : SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Leads Studio',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      profileMenu,
+                    ],
+                  ),
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.calendar_today_outlined),
-                  selectedIcon: Icon(Icons.calendar_today),
-                  label: 'Follow-ups',
+                Expanded(
+                  child: Stack(
+                    children: [
+                      navigationShell,
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: GlassNavigationBar(
+                          selectedIndex: navigationShell.currentIndex,
+                          onDestinationSelected: _onNavigate,
+                          destinations: const [
+                            GlassNavigationDestination(
+                              icon: Icons.dashboard_outlined,
+                              selectedIcon: Icons.dashboard,
+                              label: 'Dashboard',
+                            ),
+                            GlassNavigationDestination(
+                              icon: Icons.people_outline,
+                              selectedIcon: Icons.people,
+                              label: 'Leads',
+                            ),
+                            GlassNavigationDestination(
+                              icon: Icons.calendar_today_outlined,
+                              selectedIcon: Icons.calendar_today,
+                              label: 'Follow-ups',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
+          );
+
+    return Scaffold(
+      backgroundColor: Colors.transparent, // Important for ambient background
+      body: Stack(
+        children: [
+          AmbientBackground(pageIndex: navigationShell.currentIndex),
+          scaffoldContent,
+        ],
+      ),
     );
   }
 }
 
+class _SidebarItem extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _SidebarItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryAccent.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? selectedIcon : icon,
+              color: isSelected ? AppColors.primaryAccent : Colors.grey,
+            ),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected 
+                    ? AppColors.primaryAccent 
+                    : (Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,10 +1,11 @@
 class ColumnMapper {
   final Map<String, int> _fieldIndices = {};
+  final List<String> _customFieldNames = [];
   
   static const Map<String, List<String>> _knownAliases = {
     'id': ['leadflow_id', '_leadflow_id_', 'leadflow id'],
     'clientName': ['name', 'client name', 'customer name', 'lead name', 'client'],
-    'phoneNumber': ['phone', 'mobile', 'mobile number', 'phone number', 'contact', 'cell'],
+    'phoneNumber': ['phone', 'mobile', 'mobile number', 'phone number', 'contact', 'contact no', 'cell'],
     'email': ['email', 'e-mail', 'email address'],
     'eventType': ['event', 'event type', 'type of event', 'occasion'],
     'eventDate': ['event date', 'date of event'],
@@ -28,7 +29,8 @@ class ColumnMapper {
       bool matched = false;
       for (final entry in _knownAliases.entries) {
         if (entry.value.contains(normalizedHeader) || entry.key.toLowerCase() == normalizedHeader) {
-          _fieldIndices[entry.key] = i;
+          _fieldIndices.putIfAbsent(entry.key, () => i);
+          _fieldIndices.putIfAbsent(header, () => i); // Map exact string so legacy custom fields correctly resolve
           matched = true;
           break;
         }
@@ -37,6 +39,7 @@ class ColumnMapper {
       // If it doesn't match a standard field, store it by its exact original name for customFields
       if (!matched) {
         _fieldIndices[header] = i; 
+        _customFieldNames.add(header);
       }
     }
   }
@@ -52,8 +55,5 @@ class ColumnMapper {
   }
 
   /// Returns all column names that were mapped as custom fields (not in standard aliases)
-  List<String> getCustomFieldNames() {
-    final standardKeys = _knownAliases.keys.toList();
-    return _fieldIndices.keys.where((k) => !standardKeys.contains(k)).toList();
-  }
+  List<String> getCustomFieldNames() => _customFieldNames;
 }

@@ -1,3 +1,4 @@
+import 'package:leads_studio/core/widgets/glass/glass_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,12 +25,12 @@ class QuickRescheduleDialog extends ConsumerWidget {
       if (context.mounted) {
         context.pop(); // Pop loading
         context.pop(); // Pop dialog
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Follow-up rescheduled')));
+        GlassSnackBar.show(context, 'Follow-up rescheduled', isSuccess: true);
       }
     } catch (e) {
       if (context.mounted) {
         context.pop(); // Pop loading
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        GlassSnackBar.show(context, 'Error: $e', isError: true);
       }
     }
   }

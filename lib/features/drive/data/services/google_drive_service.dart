@@ -90,26 +90,24 @@ class GoogleDriveService {
     }
   }
 
-  /// Fetches the latest modifiedTime of a file without downloading it.
-  Future<DateTime?> getFileModifiedTime(String fileId) async {
+  /// Fetches the latest modifiedTime and mimeType of a file.
+  Future<drive.File?> getFileMetadata(String fileId) async {
     final api = await _getDriveApi();
     if (api == null) throw Exception('Not authenticated with Google');
 
     try {
       final fileMeta = await api.files.get(
         fileId,
-        $fields: 'modifiedTime',
+        $fields: 'modifiedTime, mimeType',
       ) as drive.File;
       
-      return fileMeta.modifiedTime;
+      return fileMeta;
     } catch (e) {
       throw Exception('Failed to fetch file metadata: $e');
     }
   }
 
-  /// Uploads a local Excel file to update an existing Google Drive file.
-  /// For Google Sheets, this seamlessly overwrites the content while preserving the ID.
-  Future<void> updateExcelFile(String fileId, String localFilePath) async {
+  Future<void> updateExcelFile(String fileId, String localFilePath, {String? targetMimeType}) async {
     final api = await _getDriveApi();
     if (api == null) throw Exception('Not authenticated with Google');
 
@@ -121,8 +119,14 @@ class GoogleDriveService {
         contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       );
 
-
       final driveFile = drive.File();
+      
+      // CRITICAL: If the target is a native Google Sheet, we MUST set the mimeType
+      // so Google Drive converts the uploaded Excel file back into a Google Sheet instead of corrupting it.
+      if (targetMimeType == 'application/vnd.google-apps.spreadsheet') {
+        driveFile.mimeType = targetMimeType;
+      }
+
       // Update the file binary content
       await api.files.update(
         driveFile,

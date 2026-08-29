@@ -57,13 +57,23 @@ class GlassNavigationBar extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            AnimatedSwitcher(
+                            AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
-                              transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-                              child: Icon(
-                                isSelected ? dest.selectedIcon : dest.icon,
-                                key: ValueKey<bool>(isSelected),
-                                color: color,
+                              curve: Curves.easeOutCubic,
+                              transform: Matrix4.translationValues(0, isSelected ? -2.0 : 0.0, 0),
+                              child: AnimatedScale(
+                                scale: isSelected ? 1.1 : 1.0,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOutBack,
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 300),
+                                  transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                                  child: Icon(
+                                    isSelected ? dest.selectedIcon : dest.icon,
+                                    key: ValueKey<bool>(isSelected),
+                                    color: color,
+                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(height: 4),

@@ -44,8 +44,8 @@ class DriveNotifier extends StateNotifier<DriveState> {
   Future<bool> connectDriveAndFetchFiles() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      // 1. Request the drive.readonly scope
-      final success = await _authNotifier.requestScopes(['https://www.googleapis.com/auth/drive.readonly']);
+      // 1. Request the full drive scope to allow uploading and modifying files
+      final success = await _authNotifier.requestScopes(['https://www.googleapis.com/auth/drive']);
       if (!success) {
         state = state.copyWith(isLoading: false, error: 'Google Drive permission denied.');
         return false;

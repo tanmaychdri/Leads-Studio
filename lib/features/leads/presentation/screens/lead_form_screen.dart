@@ -1,3 +1,4 @@
+import 'package:leads_studio/core/widgets/glass/glass_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -153,13 +154,11 @@ class _LeadFormScreenState extends ConsumerState<LeadFormScreen> {
       
       if (mounted) {
         context.pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_existingLead == null ? 'Lead created!' : 'Lead updated!')),
-        );
+        GlassSnackBar.show(context, _existingLead == null ? 'Lead created!' : 'Lead updated!', isSuccess: true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
+        GlassSnackBar.show(context, 'Failed to save: $e', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

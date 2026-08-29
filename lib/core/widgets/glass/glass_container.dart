@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:leads_studio/core/theme/glass_theme.dart';
 
-class GlassContainer extends StatelessWidget {
+class GlassContainer extends StatefulWidget {
   final Widget child;
   final double? width;
   final double? height;
@@ -25,43 +25,83 @@ class GlassContainer extends StatelessWidget {
     this.blur = GlassTheme.blurMedium,
     this.opacity = 0.7,
     this.border = true,
+    this.color,
+    this.borderColor,
     this.onTap,
   });
 
+  final Color? color;
+  final Color? borderColor;
+
+  @override
+  State<GlassContainer> createState() => _GlassContainerState();
+}
+
+class _GlassContainerState extends State<GlassContainer> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+      reverseDuration: const Duration(milliseconds: 200),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final effectiveRadius = borderRadius ?? GlassTheme.radiusMedium;
+    final effectiveRadius = widget.borderRadius ?? GlassTheme.radiusMedium;
 
     Widget container = Container(
-      width: width,
-      height: height,
-      padding: padding,
-      margin: margin,
+      width: widget.width,
+      height: widget.height,
+      padding: widget.padding,
+      margin: widget.margin,
       decoration: BoxDecoration(
-        color: GlassTheme.getSurfaceColor(context, opacity: opacity),
+        color: widget.color ?? GlassTheme.getSurfaceColor(context, opacity: widget.opacity),
         borderRadius: effectiveRadius,
-        border: border ? Border.all(
-          color: GlassTheme.getBorderColor(context),
+        border: widget.border ? Border.all(
+          color: widget.borderColor ?? GlassTheme.getBorderColor(context),
           width: 1.0,
         ) : null,
         boxShadow: GlassTheme.subtleShadow,
       ),
-      child: child,
+      child: widget.child,
     );
 
-    if (onTap != null) {
-      container = InkWell(
-        onTap: onTap,
+    if (widget.blur > 0) {
+      container = ClipRRect(
         borderRadius: effectiveRadius,
-        child: container,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: widget.blur, sigmaY: widget.blur),
+          child: container,
+        ),
       );
     }
 
-    if (blur > 0) {
-      return ClipRRect(
-        borderRadius: effectiveRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+    if (widget.onTap != null) {
+      return GestureDetector(
+        onTapDown: (_) => _controller.forward(),
+        onTapUp: (_) {
+          _controller.reverse();
+          widget.onTap!();
+        },
+        onTapCancel: () => _controller.reverse(),
+        behavior: HitTestBehavior.opaque,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
           child: container,
         ),
       );

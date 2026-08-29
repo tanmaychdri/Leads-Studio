@@ -277,14 +277,14 @@ class AppScaffold extends ConsumerWidget {
           navigationShell.goBranch(0);
         }
       },
-      child: Scaffold(
-        backgroundColor: Colors.transparent, // Important for ambient background
-        body: Stack(
-          children: [
-            AmbientBackground(pageIndex: navigationShell.currentIndex),
-            scaffoldContent,
-          ],
-        ),
+      child: Stack(
+        children: [
+          AmbientBackground(pageIndex: navigationShell.currentIndex),
+          Scaffold(
+            backgroundColor: Colors.transparent, // Important for ambient background
+            body: scaffoldContent,
+          ),
+        ],
       ),
     );
   }

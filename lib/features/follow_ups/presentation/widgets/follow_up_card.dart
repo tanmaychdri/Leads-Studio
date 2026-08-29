@@ -1,3 +1,4 @@
+import 'package:leads_studio/core/widgets/glass/glass_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -31,13 +32,13 @@ class FollowUpCard extends StatelessWidget {
         await launchUrl(url);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not launch phone app')));
+          GlassSnackBar.show(context, 'Could not launch phone app', isError: true);
         }
       }
     } else {
       await Clipboard.setData(ClipboardData(text: phone));
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Phone number copied to clipboard')));
+        GlassSnackBar.show(context, 'Phone number copied to clipboard', isSuccess: true);
       }
     }
   }

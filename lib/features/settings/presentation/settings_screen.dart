@@ -1,10 +1,11 @@
-import 'dart:ui';
+import 'package:leads_studio/core/widgets/glass/glass_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:leads_studio/features/drive/presentation/providers/drive_provider.dart';
 import 'package:leads_studio/core/widgets/glass/glass_container.dart';
 import 'package:leads_studio/core/widgets/glass/glass_button.dart';
+import 'package:leads_studio/core/widgets/glass/ambient_background.dart';
 import 'package:leads_studio/app/theme/app_colors.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -17,15 +18,7 @@ class SettingsScreen extends ConsumerWidget {
 
     return Stack(
       children: [
-        // Premium glass backdrop blur
-        ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-            child: Container(
-              color: isDark ? Colors.black.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.3),
-            ),
-          ),
-        ),
+        const AmbientBackground(),
         Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
@@ -212,9 +205,7 @@ class SettingsScreen extends ConsumerWidget {
                         style: TextStyle(color: isDark ? Colors.white70 : Colors.black54, fontWeight: FontWeight.bold),
                       ),
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Theme settings depend on system theme.')),
-                        );
+                        GlassSnackBar.show(context, 'Theme settings depend on system theme.');
                       },
                     ),
                   ],

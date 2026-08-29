@@ -53,7 +53,9 @@ class SyncEngine {
       }
 
       final fileId = metadata.fileId;
-      final remoteModifiedTime = await driveService.getFileModifiedTime(fileId);
+      final remoteFileMeta = await driveService.getFileMetadata(fileId);
+      final remoteModifiedTime = remoteFileMeta?.modifiedTime;
+      final targetMimeType = remoteFileMeta?.mimeType;
       
       bool isRemoteNewer = false;
       if (remoteModifiedTime != null) {
@@ -114,39 +116,43 @@ class SyncEngine {
         if (localLead != null) {
           final safeLocalLead = localLead!;
           if (localPendingMap.containsKey(safeLocalLead.id) && !state.resolvedLocalWins.contains(safeLocalLead.id)) {
-            // CONFLICT! Modified locally AND remote is newer, and user hasn't explicitly chosen local win yet.
-            conflicts.add(SyncConflict(
-              leadId: safeLocalLead.id,
-              clientName: safeLocalLead.clientName ?? 'Unknown',
-              localData: safeLocalLead.toJson(),
-              remoteData: {'status': remoteLead.status, 'notes': remoteLead.notes}, // Simplified representation
-            ));
+            // If remote is newer, we have a conflict. If remote is NOT newer, local pending changes safely win.
+            if (isRemoteNewer) {
+              conflicts.add(SyncConflict(
+                leadId: safeLocalLead.id,
+                clientName: safeLocalLead.clientName ?? 'Unknown',
+                localData: safeLocalLead.toJson(),
+                remoteData: {'status': remoteLead.status, 'notes': remoteLead.notes}, // Simplified representation
+              ));
+            }
           } else if (!localPendingMap.containsKey(safeLocalLead.id)) {
-             // Pull update safely
-             await (db.update(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).write(LeadsCompanion(
-               clientName: Value(remoteLead.clientName),
-               phoneNumber: Value(remoteLead.phoneNumber),
-               email: Value(remoteLead.email),
-               eventType: Value(remoteLead.eventType),
-               eventDate: Value(remoteLead.eventDate),
-               leadSource: Value(remoteLead.leadSource),
-               status: Value(remoteLead.status),
-               lastContactDate: Value(remoteLead.lastContactDate),
-               nextFollowUpDate: Value(remoteLead.nextFollowUpDate),
-               reminderDate: Value(remoteLead.reminderDate),
-               notes: Value(remoteLead.notes),
-               budget: Value(remoteLead.budget),
-               assignedPerson: Value(remoteLead.assignedPerson),
-               customFields: Value(remoteLead.customFields ?? <String, dynamic>{}),
-             ));
-             
-             if (isIdSeedingRequired) {
-               // The excel row didn't have an ID, we must push it back so it gets one.
-               // We add it to pendingChanges manually by updating syncStatus
-               await (db.update(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).write(const LeadsCompanion(syncStatus: Value('updated')));
-               // Also add it to our in-memory list for Phase 2
-               final updatedLocalLead = await (db.select(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).getSingle();
-               pendingChanges.add(updatedLocalLead);
+             // Pull update safely only if remote is newer or we need ID seeding
+             if (isRemoteNewer || isIdSeedingRequired) {
+               await (db.update(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).write(LeadsCompanion(
+                 clientName: Value(remoteLead.clientName),
+                 phoneNumber: Value(remoteLead.phoneNumber),
+                 email: Value(remoteLead.email),
+                 eventType: Value(remoteLead.eventType),
+                 eventDate: Value(remoteLead.eventDate),
+                 leadSource: Value(remoteLead.leadSource),
+                 status: Value(remoteLead.status),
+                 lastContactDate: Value(remoteLead.lastContactDate),
+                 nextFollowUpDate: Value(remoteLead.nextFollowUpDate),
+                 reminderDate: Value(remoteLead.reminderDate),
+                 notes: Value(remoteLead.notes),
+                 budget: Value(remoteLead.budget),
+                 assignedPerson: Value(remoteLead.assignedPerson),
+                 customFields: Value(remoteLead.customFields ?? <String, dynamic>{}),
+               ));
+               
+               if (isIdSeedingRequired) {
+                 // The excel row didn't have an ID, we must push it back so it gets one.
+                 // We add it to pendingChanges manually by updating syncStatus
+                 await (db.update(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).write(const LeadsCompanion(syncStatus: Value('updated')));
+                 // Also add it to our in-memory list for Phase 2
+                 final updatedLocalLead = await (db.select(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).getSingle();
+                 pendingChanges.add(updatedLocalLead);
+               }
              }
           }
         } else {
@@ -190,9 +196,13 @@ class SyncEngine {
       // Phase 2: Push
       for (var localLead in pendingChanges) {
         if (localLead.syncStatus == 'created' || localLead.syncStatus == 'updated') {
-           // We need to convert DB model to Excel model
            final excelLead = await _dbLeadToExcelLead(localLead);
-           await excelService.addOrUpdateLead(metadata.worksheetName, excelLead);
+           final updatedCustomFields = await excelService.addOrUpdateLead(metadata.worksheetName, excelLead);
+           if (updatedCustomFields != null) {
+              await (db.update(db.leads)..where((tbl) => tbl.id.equals(localLead.id))).write(LeadsCompanion(
+                 customFields: Value(updatedCustomFields),
+              ));
+           }
         } else if (localLead.syncStatus == 'deleted' || localLead.isDeleted) {
            await excelService.removeLead(metadata.worksheetName, localLead.id);
         }
@@ -200,7 +210,7 @@ class SyncEngine {
 
       if (pendingChanges.isNotEmpty) {
         await excelService.saveWorkbook();
-        await driveService.updateExcelFile(fileId, localSavePath);
+        await driveService.updateExcelFile(fileId, localSavePath, targetMimeType: targetMimeType);
         
         // Update all pending to synced
         for (var localLead in pendingChanges) {
@@ -212,9 +222,14 @@ class SyncEngine {
         }
       }
 
+      // Fetch the updated remote modified time AFTER the push to ensure we have the exact server timestamp!
+      // This prevents issues where our local clock is slightly faster than Google Drive, causing us to incorrectly ignore the next real update.
+      final updatedFileMeta = await driveService.getFileMetadata(fileId);
+      final finalRemoteTime = updatedFileMeta?.modifiedTime ?? DateTime.now();
+
       // Update metadata
       await db.update(db.spreadsheetMetadata).replace(metadata.copyWith(
-        lastKnownRemoteModifiedTime: Value(DateTime.now()),
+        lastKnownRemoteModifiedTime: Value(finalRemoteTime),
         lastSuccessfulSyncAt: Value(DateTime.now()),
       ));
 

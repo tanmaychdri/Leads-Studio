@@ -156,7 +156,7 @@ class DashboardScreen extends ConsumerWidget {
                     Expanded(
                       child: GlassContainer(
                         padding: const EdgeInsets.symmetric(vertical: 24),
-                        onTap: () => context.push('/leads/new'),
+                        onTap: () => context.push('/leads/add'),
                         child: const Column(
                           children: [
                             Icon(Icons.person_add_alt_1, size: 32, color: AppColors.primaryAccent),
@@ -170,7 +170,7 @@ class DashboardScreen extends ConsumerWidget {
                     Expanded(
                       child: GlassContainer(
                         padding: const EdgeInsets.symmetric(vertical: 24),
-                        onTap: () => context.push('/follow_ups'),
+                        onTap: () => context.go('/follow-ups'),
                         child: const Column(
                           children: [
                             Icon(Icons.calendar_month, size: 32, color: AppColors.secondaryAccent),

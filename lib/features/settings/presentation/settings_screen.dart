@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:leads_studio/features/drive/presentation/providers/drive_provider.dart';
+import 'package:leads_studio/core/widgets/glass/ambient_background.dart';
 import 'package:leads_studio/core/widgets/glass/glass_container.dart';
 import 'package:leads_studio/core/widgets/glass/glass_button.dart';
 import 'package:leads_studio/app/theme/app_colors.dart';
@@ -14,14 +15,17 @@ class SettingsScreen extends ConsumerWidget {
     final driveState = ref.watch(driveProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
+    return Stack(
+      children: [
+        const AmbientBackground(pageIndex: 3), // Unique index for different glow position
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+            backgroundColor: Colors.transparent,
+          ),
+          body: SafeArea(
+            child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -213,8 +217,10 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  ],
+);
+}
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

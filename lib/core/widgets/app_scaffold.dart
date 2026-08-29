@@ -5,6 +5,7 @@ import 'package:leads_studio/features/auth/presentation/providers/auth_provider.
 import 'package:leads_studio/core/widgets/glass/ambient_background.dart';
 import 'package:leads_studio/core/widgets/glass/glass_navigation.dart';
 import 'package:leads_studio/core/widgets/glass/glass_container.dart';
+import 'package:leads_studio/core/theme/glass_theme.dart';
 import 'package:leads_studio/app/theme/app_colors.dart';
 
 class AppScaffold extends ConsumerWidget {
@@ -29,54 +30,95 @@ class AppScaffold extends ConsumerWidget {
     final user = authState.user;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final profileMenu = PopupMenuButton<String>(
-      tooltip: 'Account Options',
-      offset: const Offset(0, 50),
-      color: isDark ? AppColors.glassSurfaceDark : Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      onSelected: (value) {
-        if (value == 'settings') {
-          context.push('/settings');
-        } else if (value == 'signout') {
-          ref.read(authProvider.notifier).signOut();
-        }
+    final profileMenu = GestureDetector(
+      onTap: () {
+        showGeneralDialog(
+          context: context,
+          barrierDismissible: true,
+          barrierLabel: 'Dismiss',
+          barrierColor: Colors.transparent, // No dimming for glassmorphism
+          transitionDuration: const Duration(milliseconds: 200),
+          pageBuilder: (context, animation, secondaryAnimation) {
+            return Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 80, right: 16),
+                child: Material(
+                  color: Colors.transparent,
+                  child: GlassContainer(
+                    width: 250,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user?.displayName ?? 'User',
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                user?.email ?? '',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Divider(color: GlassTheme.getBorderColor(context)),
+                        InkWell(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            context.push('/settings');
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                Icon(Icons.settings, size: 20),
+                                SizedBox(width: 12),
+                                Text('Settings'),
+                              ],
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            ref.read(authProvider.notifier).signOut();
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                Icon(Icons.logout, color: Colors.red, size: 20),
+                                SizedBox(width: 12),
+                                Text('Sign Out', style: TextStyle(color: Colors.red)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+          transitionBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0, -0.05), end: Offset.zero).animate(animation),
+                child: child,
+              ),
+            );
+          },
+        );
       },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        PopupMenuItem<String>(
-          value: 'profile',
-          enabled: false,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                user?.displayName ?? 'User',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              Text(
-                user?.email ?? '',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        const PopupMenuItem<String>(
-          value: 'settings',
-          child: ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Settings'),
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'signout',
-          child: ListTile(
-            leading: Icon(Icons.logout, color: Colors.red),
-            title: Text('Sign Out', style: TextStyle(color: Colors.red)),
-            contentPadding: EdgeInsets.zero,
-          ),
-        ),
-      ],
       child: CircleAvatar(
         radius: 20,
         backgroundColor: AppColors.primaryAccent.withValues(alpha: 0.2),

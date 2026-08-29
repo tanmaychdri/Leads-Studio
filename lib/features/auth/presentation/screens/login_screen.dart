@@ -53,7 +53,7 @@ class LoginScreen extends ConsumerWidget {
                             ],
                           ),
                           child: Image.asset(
-                            'assets/logo.png',
+                            'assets/Leads Studio Dark.png',
                             height: 64,
                             errorBuilder: (context, error, stackTrace) => const Icon(Icons.business_center, size: 64, color: Color(0xFF107C41)),
                           ),

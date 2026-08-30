@@ -311,24 +311,8 @@ class ExcelService {
         }
       }
       
-      // We need a smart comparison. If the old value matches the new value, skip update.
-      bool isChanged = true;
-      if (existingStringValue == newValueStr || (existingStringValue == null && newValueStr.isEmpty)) {
-        isChanged = false;
-      }
-
-      // Special handling for DateTime comparison to prevent false positives due to formatting
-      if (value is DateTime && existingData?.value is DateTimeCellValue) {
-         final d = existingData!.value as DateTimeCellValue;
-         if (d.year == value.year && d.month == value.month && d.day == value.day && d.hour == value.hour && d.minute == value.minute) {
-            isChanged = false;
-         }
-      }
-
-      if (!isChanged) return; // Safely skip!
-
       // Retain existing style if possible
-      CellStyle? styleToApply = existingData?.cellStyle;
+CellStyle? styleToApply = existingData?.cellStyle;
       if (styleToApply == null && referenceRowIndex >= 0 && referenceRowIndex < rows.length && colIdx < rows[referenceRowIndex].length) {
          styleToApply = rows[referenceRowIndex][colIdx]?.cellStyle;
       }
@@ -362,6 +346,29 @@ class ExcelService {
           );
         }
       }
+
+      // We need a smart comparison. If the old value matches the new value, skip update.
+      bool isChanged = true;
+      if (existingStringValue == newValueStr || (existingStringValue == null && newValueStr.isEmpty)) {
+        isChanged = false;
+      }
+
+      // Special handling for DateTime comparison to prevent false positives due to formatting
+      if (value is DateTime && existingData?.value is DateTimeCellValue) {
+         final d = existingData!.value as DateTimeCellValue;
+         if (d.year == value.year && d.month == value.month && d.day == value.day && d.hour == value.hour && d.minute == value.minute) {
+            isChanged = false;
+         }
+      }
+
+      if (!isChanged) {
+        // Even if the value didn't change, the user requested that we always enforce
+        // the horizontal and vertical centering on every synced row.
+        table.cell(cellIndex).cellStyle = styleToApply;
+        return; 
+      }
+
+
 
       if (value == null) {
          table.updateCell(cellIndex, TextCellValue(''), cellStyle: styleToApply);

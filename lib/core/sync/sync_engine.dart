@@ -54,36 +54,19 @@ class SyncEngine {
 
       final fileId = metadata.fileId;
       final remoteFileMeta = await driveService.getFileMetadata(fileId);
-      final remoteModifiedTime = remoteFileMeta?.modifiedTime;
       final targetMimeType = remoteFileMeta?.mimeType;
-      
-      bool isRemoteNewer = false;
-      if (remoteModifiedTime != null) {
-         if (metadata.lastKnownRemoteModifiedTime == null || remoteModifiedTime.isAfter(metadata.lastKnownRemoteModifiedTime!)) {
-           isRemoteNewer = true;
-         }
-      }
 
-      // Check for pending local changes
+      // Always fetch pending local changes
       final pendingChanges = await (db.select(db.leads)..where((tbl) => tbl.syncStatus.isNotValue('synced'))).get();
+      final localPendingMap = {for (var lead in pendingChanges) lead.id: lead};
       
-      if (!isRemoteNewer && pendingChanges.isEmpty) {
-        // Nothing to do
-        ref.read(syncStateProvider.notifier).state = state.copyWith(
-          status: SyncStatus.success,
-          lastSyncTime: DateTime.now(),
-        );
-        return;
-      }
-
-      // We need to download the file if remote is newer OR if we have changes to push (since we need to write to it)
+      // Always download the file for a full two-way diff
       final tempDir = await getTemporaryDirectory();
       final localSavePath = '${tempDir.path}/sync_temp_workbook.xlsx';
       
       await driveService.downloadFile(fileId, localSavePath);
       await excelService.loadWorkbook(localSavePath);
       
-      // Phase 1: Conflict Detection & Pull
       List<SyncConflict> conflicts = [];
       
       final parseResult = await excelService.parseWorksheet(metadata.worksheetName);
@@ -92,8 +75,11 @@ class SyncEngine {
       }
 
       final remoteLeadsMap = {for (var lead in parseResult.leads) lead.id: lead};
-      final localPendingMap = {for (var lead in pendingChanges) lead.id: lead};
+      
+      // Get all local leads that are synced (not pending) for deletion checking
+      final allLocalLeads = await db.select(db.leads).get();
 
+      // Phase 1: Pull & Conflict Detection
       for (var remoteLead in parseResult.leads) {
         var localLead = await (db.select(db.leads)..where((tbl) => tbl.id.equals(remoteLead.id))).getSingleOrNull();
         
@@ -114,21 +100,25 @@ class SyncEngine {
         }
 
         if (localLead != null) {
-          final safeLocalLead = localLead!;
-          if (localPendingMap.containsKey(safeLocalLead.id) && !state.resolvedLocalWins.contains(safeLocalLead.id)) {
-            // If remote is newer, we have a conflict. If remote is NOT newer, local pending changes safely win.
-            if (isRemoteNewer) {
+          final safeLocalLead = localLead;
+          final isPending = localPendingMap.containsKey(safeLocalLead.id);
+          final hasResolvedConflictLocally = state.resolvedLocalWins.contains(safeLocalLead.id);
+
+          // Deep diff
+          final isSame = _isEqual(safeLocalLead, remoteLead);
+
+          if (!isSame) {
+            if (isPending && !hasResolvedConflictLocally) {
+              // We have local changes AND remote has different data -> CONFLICT
               conflicts.add(SyncConflict(
                 leadId: safeLocalLead.id,
                 clientName: safeLocalLead.clientName ?? 'Unknown',
                 localData: safeLocalLead.toJson(),
                 remoteData: {'status': remoteLead.status, 'notes': remoteLead.notes}, // Simplified representation
               ));
-            }
-          } else if (!localPendingMap.containsKey(safeLocalLead.id)) {
-             // Pull update safely only if remote is newer or we need ID seeding
-             if (isRemoteNewer || isIdSeedingRequired) {
-               await (db.update(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).write(LeadsCompanion(
+            } else if (!isPending) {
+              // No local changes, but remote is different -> PULL updates
+              await (db.update(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).write(LeadsCompanion(
                  clientName: Value(remoteLead.clientName),
                  phoneNumber: Value(remoteLead.phoneNumber),
                  email: Value(remoteLead.email),
@@ -144,16 +134,16 @@ class SyncEngine {
                  assignedPerson: Value(remoteLead.assignedPerson),
                  customFields: Value(remoteLead.customFields ?? <String, dynamic>{}),
                ));
-               
-               if (isIdSeedingRequired) {
-                 // The excel row didn't have an ID, we must push it back so it gets one.
-                 // We add it to pendingChanges manually by updating syncStatus
-                 await (db.update(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).write(const LeadsCompanion(syncStatus: Value('updated')));
-                 // Also add it to our in-memory list for Phase 2
-                 final updatedLocalLead = await (db.select(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).getSingle();
-                 pendingChanges.add(updatedLocalLead);
-               }
-             }
+            }
+          }
+          
+          if (isIdSeedingRequired) {
+            // The excel row didn't have an ID, we must push it back so it gets one.
+            // We add it to pendingChanges manually by updating syncStatus
+            await (db.update(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).write(const LeadsCompanion(syncStatus: Value('updated')));
+            // Also add it to our in-memory list for Phase 2
+            final updatedLocalLead = await (db.select(db.leads)..where((tbl) => tbl.id.equals(safeLocalLead.id))).getSingle();
+            pendingChanges.add(updatedLocalLead);
           }
         } else {
           // New remote lead
@@ -185,6 +175,17 @@ class SyncEngine {
         }
       }
 
+      // Phase 1.5: Remote Deletions
+      for (var localLead in allLocalLeads) {
+        if (!remoteLeadsMap.containsKey(localLead.id)) {
+          // It's missing in remote!
+          if (!localPendingMap.containsKey(localLead.id)) {
+             // It was synced before, but now missing remotely. This means it was deleted in Excel.
+             await (db.delete(db.leads)..where((tbl) => tbl.id.equals(localLead.id))).go();
+          }
+        }
+      }
+
       if (conflicts.isNotEmpty) {
         ref.read(syncStateProvider.notifier).state = state.copyWith(
           status: SyncStatus.conflict,
@@ -194,10 +195,12 @@ class SyncEngine {
       }
 
       // Phase 2: Push
+      bool excelWasModified = false;
       for (var localLead in pendingChanges) {
         if (localLead.syncStatus == 'created' || localLead.syncStatus == 'updated') {
            final excelLead = await _dbLeadToExcelLead(localLead);
            final updatedCustomFields = await excelService.addOrUpdateLead(metadata.worksheetName, excelLead);
+           excelWasModified = true;
            if (updatedCustomFields != null) {
               await (db.update(db.leads)..where((tbl) => tbl.id.equals(localLead.id))).write(LeadsCompanion(
                  customFields: Value(updatedCustomFields),
@@ -205,14 +208,17 @@ class SyncEngine {
            }
         } else if (localLead.syncStatus == 'deleted' || localLead.isDeleted) {
            await excelService.removeLead(metadata.worksheetName, localLead.id);
+           excelWasModified = true;
         }
       }
 
-      if (pendingChanges.isNotEmpty) {
+      if (excelWasModified) {
         await excelService.saveWorkbook();
         await driveService.updateExcelFile(fileId, localSavePath, targetMimeType: targetMimeType);
-        
-        // Update all pending to synced
+      }
+      
+      // Update all pending to synced regardless of whether excel was modified (since they are now synced)
+      if (pendingChanges.isNotEmpty) {
         for (var localLead in pendingChanges) {
           if (localLead.isDeleted) {
              await (db.delete(db.leads)..where((tbl) => tbl.id.equals(localLead.id))).go();
@@ -223,7 +229,6 @@ class SyncEngine {
       }
 
       // Fetch the updated remote modified time AFTER the push to ensure we have the exact server timestamp!
-      // This prevents issues where our local clock is slightly faster than Google Drive, causing us to incorrectly ignore the next real update.
       final updatedFileMeta = await driveService.getFileMetadata(fileId);
       final finalRemoteTime = updatedFileMeta?.modifiedTime ?? DateTime.now();
 
@@ -263,10 +268,8 @@ class SyncEngine {
       // Overwrite local with remote
       final conflict = state.activeConflicts?.firstWhere((c) => c.leadId == leadId);
       if (conflict != null) {
-        // Find remote lead data from the last pull attempt (we stored minimal remote data in conflict for now,
-        // but for a real overwrite we should re-pull or store the full remote lead in SyncConflict).
-        // For MVP, we will just set syncStatus to synced and triggerSync again to pull it naturally,
-        // Wait, if it's 'synced' it will be pulled naturally because `localPendingMap.containsKey` will be false!
+        // Find remote lead data from the last pull attempt
+        // We set syncStatus to synced so that triggerSync naturally pulls the remote version.
         await (db.update(db.leads)..where((tbl) => tbl.id.equals(leadId))).write(const LeadsCompanion(syncStatus: Value('synced')));
       }
     }
@@ -275,6 +278,31 @@ class SyncEngine {
     
     // Automatically trigger sync again to continue
     triggerSync();
+  }
+
+  bool _isEqual(Lead local, excel_models.Lead remote) {
+    if (local.clientName != remote.clientName) return false;
+    if (local.phoneNumber != remote.phoneNumber) return false;
+    if (local.email != remote.email) return false;
+    if (local.eventType != remote.eventType) return false;
+    if (local.eventDate != remote.eventDate) return false;
+    if (local.leadSource != remote.leadSource) return false;
+    if (local.status != remote.status) return false;
+    if (local.lastContactDate != remote.lastContactDate) return false;
+    if (local.nextFollowUpDate != remote.nextFollowUpDate) return false;
+    if (local.reminderDate != remote.reminderDate) return false;
+    if (local.notes != remote.notes) return false;
+    if (local.budget != remote.budget) return false;
+    if (local.assignedPerson != remote.assignedPerson) return false;
+    
+    // Compare custom fields
+    final localMap = local.customFields ?? {};
+    final remoteMap = remote.customFields ?? {};
+    if (localMap.length != remoteMap.length) return false;
+    for (final key in localMap.keys) {
+      if (localMap[key] != remoteMap[key]) return false;
+    }
+    return true;
   }
 
   Future<excel_models.Lead> _dbLeadToExcelLead(Lead localLead) async {

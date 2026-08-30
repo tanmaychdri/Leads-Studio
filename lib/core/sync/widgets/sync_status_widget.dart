@@ -38,7 +38,10 @@ class SyncStatusWidget extends ConsumerWidget {
                 else if (syncState.lastSyncTime != null)
                   Text(
                     'Last synced: ${_formatTime(syncState.lastSyncTime!)}',
-                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                    style: TextStyle(
+                      fontSize: 12, 
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+                    ),
                   ),
               ],
             ),

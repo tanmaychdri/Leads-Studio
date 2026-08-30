@@ -54,12 +54,16 @@ class FollowUpCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GlassContainer(
-      onTap: () => context.push('/leads/${lead.id}'),
-      padding: const EdgeInsets.all(16.0),
-      blur: 0,
-      opacity: isDark ? 0.3 : 0.6,
-      child: Row(
+    return Hero(
+      tag: 'lead-card-${lead.id}',
+      child: Material(
+        type: MaterialType.transparency,
+        child: GlassContainer(
+          onTap: () => context.push('/leads/${lead.id}'),
+          padding: const EdgeInsets.all(16.0),
+          blur: 0,
+          opacity: isDark ? 0.3 : 0.6,
+          child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
@@ -146,6 +150,8 @@ class FollowUpCard extends StatelessWidget {
           )
         ],
       ),
+    ),
+    ),
     );
   }
 }

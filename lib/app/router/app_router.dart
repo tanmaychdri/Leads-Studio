@@ -117,15 +117,69 @@ final goRouterProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: 'add',
-                    builder: (context, state) => const LeadFormScreen(),
+                    pageBuilder: (context, state) {
+                      return CustomTransitionPage(
+                        key: state.pageKey,
+                        opaque: false,
+                        barrierColor: Colors.black.withValues(alpha: 0.3),
+                        barrierDismissible: true,
+                        transitionDuration: const Duration(milliseconds: 400),
+                        reverseTransitionDuration: const Duration(milliseconds: 400),
+                        child: const LeadFormScreen(),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          final curvedAnimation = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                            reverseCurve: Curves.easeInCubic,
+                          );
+                          return FadeTransition(opacity: curvedAnimation, child: child);
+                        },
+                      );
+                    },
                   ),
                   GoRoute(
                     path: 'edit/:id',
-                    builder: (context, state) => LeadFormScreen(existingLeadId: state.pathParameters['id']),
+                    pageBuilder: (context, state) {
+                      return CustomTransitionPage(
+                        key: state.pageKey,
+                        opaque: false,
+                        barrierColor: Colors.black.withValues(alpha: 0.3),
+                        barrierDismissible: true,
+                        transitionDuration: const Duration(milliseconds: 400),
+                        reverseTransitionDuration: const Duration(milliseconds: 400),
+                        child: LeadFormScreen(existingLeadId: state.pathParameters['id']),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          final curvedAnimation = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                            reverseCurve: Curves.easeInCubic,
+                          );
+                          return FadeTransition(opacity: curvedAnimation, child: child);
+                        },
+                      );
+                    },
                   ),
                   GoRoute(
                     path: ':id',
-                    builder: (context, state) => LeadDetailsScreen(id: state.pathParameters['id']!),
+                    pageBuilder: (context, state) {
+                      return CustomTransitionPage(
+                        key: state.pageKey,
+                        opaque: false,
+                        barrierColor: Colors.black.withValues(alpha: 0.3),
+                        barrierDismissible: true,
+                        transitionDuration: const Duration(milliseconds: 400),
+                        reverseTransitionDuration: const Duration(milliseconds: 400),
+                        child: LeadDetailsScreen(id: state.pathParameters['id']!),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          final curvedAnimation = CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                            reverseCurve: Curves.easeInCubic,
+                          );
+                          return FadeTransition(opacity: curvedAnimation, child: child);
+                        },
+                      );
+                    },
                   ),
                 ],
               ),

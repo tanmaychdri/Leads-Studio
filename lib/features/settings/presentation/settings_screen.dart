@@ -35,6 +35,7 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               
               GlassContainer(
+                blur: 0,
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,6 +186,7 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               
               GlassContainer(
+                blur: 0,
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [

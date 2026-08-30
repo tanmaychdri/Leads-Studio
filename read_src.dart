@@ -1,0 +1,1 @@
+﻿import 'dart:io'; void main() { final cache = Platform.environment['LOCALAPPDATA']! + '\\\\Pub\\\\Cache\\\\hosted\\\\pub.dev\\\\excel-4.0.6\\\\lib\\\\src\\\\cell\\\\cell_style.dart'; print(File(cache).readAsStringSync()); }

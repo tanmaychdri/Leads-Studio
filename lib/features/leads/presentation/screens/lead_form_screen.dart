@@ -158,7 +158,7 @@ class _LeadFormScreenState extends ConsumerState<LeadFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        GlassSnackBar.show(context, 'Failed to save: $e', isError: true);
+        GlassSnackBar.show(context, 'Failed to save: ', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -175,139 +175,179 @@ class _LeadFormScreenState extends ConsumerState<LeadFormScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        title: Text(_existingLead == null ? 'Add Lead' : 'Edit Lead', style: const TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        actions: [
-          if (_isSaving)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: GlassButton(
-                onPressed: _saveLead,
-                isPrimary: true,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: const Text('SAVE'),
-              ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 800),
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16.0,
+              right: 16.0,
+              top: MediaQuery.of(context).padding.top + 16.0,
+              bottom: 104.0,
             ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 120.0, top: 16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildSectionHeader(context, 'CLIENT INFORMATION'),
-              const SizedBox(height: 12),
-              GlassContainer(
-                padding: const EdgeInsets.all(24.0),
+            child: Hero(
+              tag: widget.existingLeadId != null ? 'lead-card-${widget.existingLeadId}' : 'add-lead-hero',
+              child: Material(
+                type: MaterialType.transparency,
+                child: GlassContainer(
+                padding: EdgeInsets.zero,
+                opacity: isDark ? 0.3 : 0.6,
+                blur: GlassTheme.blurHeavy,
                 child: Column(
                   children: [
-                    GlassTextField(
-                      controller: _nameController,
-                      labelText: 'Client Name *',
-                      prefixIcon: Icon(Icons.person, color: isDark ? Colors.white70 : Colors.black54),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
-                    ),
-                    const SizedBox(height: 16),
-                    GlassTextField(
-                      controller: _phoneController,
-                      labelText: 'Phone Number',
-                      prefixIcon: Icon(Icons.phone, color: isDark ? Colors.white70 : Colors.black54),
-                      keyboardType: TextInputType.phone,
-                    ),
-                    const SizedBox(height: 16),
-                    GlassTextField(
-                      controller: _emailController,
-                      labelText: 'Email Address',
-                      prefixIcon: Icon(Icons.email, color: isDark ? Colors.white70 : Colors.black54),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: GlassTheme.getSurfaceColor(context, opacity: 0.5),
-                        borderRadius: GlassTheme.radiusSmall,
-                        border: Border.all(color: GlassTheme.getBorderColor(context, opacity: 0.3)),
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Text(_existingLead == null ? 'Add Lead' : 'Edit Lead', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                          const Spacer(),
+                          if (_isSaving)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 16.0),
+                              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+                            )
+                          else
+                            GlassButton(
+                              onPressed: _saveLead,
+                              isPrimary: true,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: const Text('SAVE'),
+                            ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            icon: Icon(Icons.close, color: isDark ? Colors.white70 : Colors.black87),
+                            onPressed: () => context.pop(),
+                          ),
+                        ],
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedStatus,
-                          isExpanded: true,
-                          icon: Icon(Icons.arrow_drop_down, color: isDark ? Colors.white70 : Colors.black54),
-                          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
-                          style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16),
-                          items: LeadStatus.values.map((status) {
-                            return DropdownMenuItem(
-                              value: status.name,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.label, size: 20, color: isDark ? Colors.white70 : Colors.black54),
-                                  const SizedBox(width: 12),
-                                  Text(status.displayName),
-                                ],
+                    ),
+                    const Divider(height: 1, color: Colors.white24),
+                    // Scrollable Form
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionHeader(context, 'CLIENT INFORMATION'),
+                              const SizedBox(height: 12),
+                              GlassContainer(
+                                blur: 0,
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  children: [
+                                    GlassTextField(
+                                      controller: _nameController,
+                                      labelText: 'Client Name *',
+                                      prefixIcon: Icon(Icons.person, color: isDark ? Colors.white70 : Colors.black54),
+                                      validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    GlassTextField(
+                                      controller: _phoneController,
+                                      labelText: 'Phone Number',
+                                      prefixIcon: Icon(Icons.phone, color: isDark ? Colors.white70 : Colors.black54),
+                                      keyboardType: TextInputType.phone,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    GlassTextField(
+                                      controller: _emailController,
+                                      labelText: 'Email Address',
+                                      prefixIcon: Icon(Icons.email, color: isDark ? Colors.white70 : Colors.black54),
+                                      keyboardType: TextInputType.emailAddress,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                                      decoration: BoxDecoration(
+                                        color: GlassTheme.getSurfaceColor(context, opacity: 0.5),
+                                        borderRadius: GlassTheme.radiusSmall,
+                                        border: Border.all(color: GlassTheme.getBorderColor(context, opacity: 0.3)),
+                                      ),
+                                      child: DropdownButtonHideUnderline(
+                                        child: DropdownButton<String>(
+                                          value: _selectedStatus,
+                                          isExpanded: true,
+                                          icon: Icon(Icons.arrow_drop_down, color: isDark ? Colors.white70 : Colors.black54),
+                                          dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                          style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16),
+                                          items: LeadStatus.values.map((status) {
+                                            return DropdownMenuItem(
+                                              value: status.name,
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.label, size: 20, color: isDark ? Colors.white70 : Colors.black54),
+                                                  const SizedBox(width: 12),
+                                                  Text(status.displayName),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (val) {
+                                            if (val != null) setState(() => _selectedStatus = val);
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) setState(() => _selectedStatus = val);
-                          },
+                              const SizedBox(height: 32),
+                              
+                              _buildSectionHeader(context, 'EVENT INFORMATION'),
+                              const SizedBox(height: 12),
+                              GlassContainer(
+                                blur: 0,
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  children: [
+                                    GlassTextField(
+                                      controller: _eventController,
+                                      labelText: 'Event Type (e.g. Wedding)',
+                                      prefixIcon: Icon(Icons.event, color: isDark ? Colors.white70 : Colors.black54),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildDateSelector(
+                                      context: context,
+                                      title: _eventDate == null ? 'Select Event Date' : DateFormat('dd MMM yyyy').format(_eventDate!),
+                                      icon: Icons.calendar_month,
+                                      onTap: () => _selectDate(context, true),
+                                      onClear: _eventDate != null ? () => setState(() => _eventDate = null) : null,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    _buildDateSelector(
+                                      context: context,
+                                      title: _followUpDate == null ? 'Set Follow-up Date' : DateFormat('dd MMM yyyy').format(_followUpDate!),
+                                      icon: Icons.notification_important,
+                                      onTap: () => _selectDate(context, false),
+                                      onClear: _followUpDate != null ? () => setState(() => _followUpDate = null) : null,
+                                      isHighlight: true,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              
+                              _buildSectionHeader(context, 'ADDITIONAL NOTES'),
+                              const SizedBox(height: 12),
+                              GlassTextField(
+                                controller: _notesController,
+                                labelText: 'Notes',
+                                maxLines: 4,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-              
-              _buildSectionHeader(context, 'EVENT INFORMATION'),
-              const SizedBox(height: 12),
-              GlassContainer(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  children: [
-                    GlassTextField(
-                      controller: _eventController,
-                      labelText: 'Event Type (e.g. Wedding)',
-                      prefixIcon: Icon(Icons.event, color: isDark ? Colors.white70 : Colors.black54),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDateSelector(
-                      context: context,
-                      title: _eventDate == null ? 'Select Event Date' : DateFormat('dd MMM yyyy').format(_eventDate!),
-                      icon: Icons.calendar_month,
-                      onTap: () => _selectDate(context, true),
-                      onClear: _eventDate != null ? () => setState(() => _eventDate = null) : null,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDateSelector(
-                      context: context,
-                      title: _followUpDate == null ? 'Set Follow-up Date' : DateFormat('dd MMM yyyy').format(_followUpDate!),
-                      icon: Icons.notification_important,
-                      onTap: () => _selectDate(context, false),
-                      onClear: _followUpDate != null ? () => setState(() => _followUpDate = null) : null,
-                      isHighlight: true,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              
-              _buildSectionHeader(context, 'ADDITIONAL NOTES'),
-              const SizedBox(height: 12),
-              GlassTextField(
-                controller: _notesController,
-                labelText: 'Notes',
-                maxLines: 4,
-              ),
-            ],
+            ),
+            ),
           ),
         ),
       ),

@@ -117,6 +117,7 @@ class DashboardScreen extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: GlassContainer(
+                    blur: 0,
                     padding: const EdgeInsets.all(24.0),
                   child: Wrap(
                     spacing: 24,
@@ -160,6 +161,7 @@ class DashboardScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: GlassContainer(
+                        blur: 0,
                         padding: const EdgeInsets.symmetric(vertical: 24),
                         onTap: () => context.push('/leads/add'),
                         child: const Column(
@@ -174,6 +176,7 @@ class DashboardScreen extends ConsumerWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       child: GlassContainer(
+                        blur: 0,
                         padding: const EdgeInsets.symmetric(vertical: 24),
                         onTap: () => context.goNamed('follow-ups'),
                         child: const Column(

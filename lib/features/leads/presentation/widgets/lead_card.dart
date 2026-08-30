@@ -18,12 +18,16 @@ class LeadCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GlassContainer(
-      onTap: onTap,
-      padding: const EdgeInsets.all(16.0),
-      // Use no blur for list items to maintain 60fps scrolling
-      blur: 0,
-      opacity: isDark ? 0.4 : 0.6,
+    return Hero(
+      tag: 'lead-card-${lead.id}',
+      child: Material(
+        type: MaterialType.transparency,
+        child: GlassContainer(
+          onTap: onTap,
+          padding: const EdgeInsets.all(16.0),
+          // Use no blur for list items to maintain 60fps scrolling
+          blur: 0,
+          opacity: isDark ? 0.4 : 0.6,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -79,6 +83,8 @@ class LeadCard extends StatelessWidget {
           ],
         ],
       ),
+    ),
+    ),
     );
   }
 }

@@ -25,30 +25,22 @@ class LeadsScreen extends ConsumerWidget {
         title: const Text('Leads', style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         actions: [
-          if (isDesktop)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: GlassButton(
-                onPressed: () => context.push('/leads/add'),
-                isPrimary: true,
-                child: const Row(
-                  children: [
-                    Icon(Icons.add, size: 20, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text('Add Lead'),
-                  ],
-                ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: GlassButton(
+              onPressed: () => context.push('/leads/add'),
+              isPrimary: true,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: const Row(
+                children: [
+                  Icon(Icons.add, size: 18, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text('Add', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                ],
               ),
             ),
+          ),
         ],
-      ),
-      floatingActionButton: isDesktop ? null : Padding(
-        padding: const EdgeInsets.only(bottom: 90.0),
-        child: FloatingActionButton(
-          onPressed: () => context.push('/leads/add'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
       ),
       body: Column(
         children: [

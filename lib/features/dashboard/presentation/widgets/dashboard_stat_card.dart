@@ -18,6 +18,7 @@ class DashboardStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassCard(
+      blur: 0,
       colorOverride: color.withValues(alpha: 0.1),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

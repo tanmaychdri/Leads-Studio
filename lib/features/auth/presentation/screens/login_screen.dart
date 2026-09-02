@@ -120,11 +120,15 @@ class LoginScreen extends ConsumerWidget {
                                       errorBuilder: (context, error, stackTrace) => const Icon(Icons.account_circle, size: 24),
                                     ),
                                     const SizedBox(width: 12),
-                                    const Text(
-                                      'Continue with Google',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                                    const Flexible(
+                                      child: Text(
+                                        'Continue with Google',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],

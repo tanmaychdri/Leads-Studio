@@ -20,7 +20,10 @@ class ConnectDriveScreen extends ConsumerWidget {
         Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
-            title: const Text('Connect Drive', style: TextStyle(fontWeight: FontWeight.bold)),
+            title: const Text(
+              'Connect Drive',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
             backgroundColor: Colors.transparent,
           ),
           body: SafeArea(
@@ -36,18 +39,26 @@ class ConnectDriveScreen extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Icon(Icons.cloud_sync, size: 80, color: Colors.blue),
+                        const Icon(
+                          Icons.cloud_sync,
+                          size: 80,
+                          color: Colors.blue,
+                        ),
                         const SizedBox(height: 24),
                         Text(
                           'Connect Your Lead Database',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'Connect Google Drive and select the Excel file you use to manage your client leads.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16, color: isDark ? Colors.white70 : Colors.black54),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
                         ),
                         const SizedBox(height: 48),
                         if (driveState.error != null)
@@ -57,7 +68,9 @@ class ConnectDriveScreen extends ConsumerWidget {
                             decoration: BoxDecoration(
                               color: Colors.red.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                              border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.3),
+                              ),
                             ),
                             child: Text(
                               driveState.error!,
@@ -72,21 +85,47 @@ class ConnectDriveScreen extends ConsumerWidget {
                             onPressed: driveState.isLoading
                                 ? null
                                 : () async {
-                                    final success = await ref.read(driveProvider.notifier).connectDriveAndFetchFiles();
+                                    final success = await ref
+                                        .read(driveProvider.notifier)
+                                        .connectDriveAndFetchFiles();
                                     if (success && context.mounted) {
                                       context.push('/drive/select');
                                     }
                                   },
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 4.0,
+                              ),
                               child: driveState.isLoading
-                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
                                   : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
-                                        Icon(Icons.add_to_drive, color: Colors.white),
+                                        Icon(
+                                          Icons.add_to_drive,
+                                          color: Colors.white,
+                                        ),
                                         SizedBox(width: 12),
-                                        Text('Connect Google Drive', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
+                                        Flexible(
+                                          child: Text(
+                                            'Connect Google Drive',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
                                       ],
                                     ),
                             ),

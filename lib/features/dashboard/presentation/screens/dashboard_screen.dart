@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import 'dart:io';
 
 import 'package:leads_studio/features/auth/presentation/providers/auth_provider.dart';
@@ -29,7 +30,8 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(dashboardStatsProvider);
     final user = ref.watch(authProvider).user;
-    final isDesktop = Platform.isWindows || Platform.isMacOS || Platform.isLinux;
+    final isDesktop =
+        Platform.isWindows || Platform.isMacOS || Platform.isLinux;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -38,44 +40,49 @@ class DashboardScreen extends ConsumerWidget {
         data: (stats) {
           return SingleChildScrollView(
             padding: EdgeInsets.only(
-              left: 24.0, 
-              right: 24.0, 
-              top: isDesktop ? 48.0 : 16.0, 
-              bottom: 120.0
+              left: 24.0,
+              right: 24.0,
+              top: isDesktop ? 48.0 : 16.0,
+              bottom: 120.0,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '${_getGreeting()}, ${user?.displayName?.split(' ').first ?? 'User'}',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.headlineMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Here is your LeadFlow overview.',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: isDark ? Colors.white70 : Colors.black54,
-                      ),
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 const SyncStatusWidget(),
-                
+
                 const SizedBox(height: 32),
 
                 // SUMMARY CARDS
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final crossAxisCount = isDesktop ? 4 : (constraints.maxWidth > 600 ? 4 : 2);
+                    final crossAxisCount = isDesktop
+                        ? 4
+                        : (constraints.maxWidth > 600 ? 4 : 2);
+                    // Use a smaller aspect ratio on mobile to give cards more vertical space
+                    final aspectRatio = isDesktop
+                        ? 1.5
+                        : (constraints.maxWidth > 600 ? 1.5 : 1.15);
                     return GridView.count(
                       crossAxisCount: crossAxisCount,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
-                      childAspectRatio: 1.5,
+                      childAspectRatio: aspectRatio,
                       children: [
                         DashboardStatCard(
                           title: 'Active Leads',
@@ -105,13 +112,14 @@ class DashboardScreen extends ConsumerWidget {
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 32),
 
                 // STATUS DISTRIBUTION
                 Text(
                   'Lead Status Distribution',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 SizedBox(
@@ -119,42 +127,63 @@ class DashboardScreen extends ConsumerWidget {
                   child: GlassContainer(
                     blur: 0,
                     padding: const EdgeInsets.all(24.0),
-                  child: Wrap(
-                    spacing: 24,
-                    runSpacing: 24,
-                    children: stats.statusDistribution.entries.map((entry) {
-                      return SizedBox(
-                        width: 140,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              entry.key,
-                              style: TextStyle(
-                                color: isDark ? Colors.white70 : Colors.black54,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              entry.value.toString(),
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final crossAxisCount = constraints.maxWidth > 400
+                            ? 3
+                            : 2;
+                        final spacing = 16.0;
+                        final itemWidth =
+                            (constraints.maxWidth -
+                                (spacing * (crossAxisCount - 1))) /
+                            crossAxisCount;
+
+                        return Wrap(
+                          spacing: spacing,
+                          runSpacing: 24,
+                          children: stats.statusDistribution.entries.map((
+                            entry,
+                          ) {
+                            return SizedBox(
+                              width: itemWidth,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    entry.key,
+                                    style: TextStyle(
+                                      color: isDark
+                                          ? Colors.white70
+                                          : Colors.black54,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    entry.value.toString(),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        );
+                      },
+                    ),
                   ),
                 ),
-                ),
                 const SizedBox(height: 32),
-                
+
                 // QUICK ACTIONS
                 Text(
                   'Quick Actions',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -166,9 +195,16 @@ class DashboardScreen extends ConsumerWidget {
                         onTap: () => context.push('/leads/add'),
                         child: const Column(
                           children: [
-                            Icon(Icons.person_add_alt_1, size: 32, color: AppColors.primaryAccent),
+                            Icon(
+                              Icons.person_add_alt_1,
+                              size: 32,
+                              color: AppColors.primaryAccent,
+                            ),
                             SizedBox(height: 12),
-                            Text('Add Lead', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              'Add Lead',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
                       ),
@@ -181,9 +217,16 @@ class DashboardScreen extends ConsumerWidget {
                         onTap: () => context.goNamed('follow-ups'),
                         child: const Column(
                           children: [
-                            Icon(Icons.calendar_month, size: 32, color: AppColors.secondaryAccent),
+                            Icon(
+                              Icons.calendar_month,
+                              size: 32,
+                              color: AppColors.secondaryAccent,
+                            ),
                             SizedBox(height: 12),
-                            Text('Follow-ups', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text(
+                              'Follow-ups',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                           ],
                         ),
                       ),
